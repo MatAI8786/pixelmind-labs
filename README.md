@@ -18,11 +18,17 @@ pip install -r requirements.txt
 python orchestrator/workflow_orchestrator.py
 ```
 
+The script automatically adjusts `sys.path` so it can be executed directly
+from the project root on any platform.
+
 3. Optionally start the Streamlit dashboard:
 
 ```bash
 streamlit run ui/streamlit_dashboard.py
 ```
+
+Like the orchestrator script, the dashboard modifies `sys.path` at runtime, so
+you can launch it from the project root without setting `PYTHONPATH`.
 
 ## Project Structure
 
