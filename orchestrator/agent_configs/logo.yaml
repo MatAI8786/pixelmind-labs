@@ -1,0 +1,13 @@
+role: "Simplify logos"
+input_schema:
+  type: object
+  properties:
+    logo_path:
+      type: string
+  required: [logo_path]
+output_schema:
+  type: object
+  properties:
+    processed_logo:
+      type: string
+  required: [processed_logo]

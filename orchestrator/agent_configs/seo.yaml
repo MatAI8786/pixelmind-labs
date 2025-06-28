@@ -1,0 +1,10 @@
+role: "Provide SEO keywords"
+input_schema:
+  type: object
+  properties: {}
+output_schema:
+  type: object
+  properties:
+    keywords:
+      type: array
+  required: [keywords]

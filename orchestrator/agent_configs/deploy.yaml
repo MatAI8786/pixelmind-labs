@@ -1,0 +1,10 @@
+role: "Prepare deployment artifacts"
+input_schema:
+  type: object
+  properties: {}
+output_schema:
+  type: object
+  properties:
+    artifact:
+      type: object
+  required: [artifact]

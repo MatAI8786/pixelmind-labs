@@ -1,0 +1,13 @@
+role: "Send onboarding message"
+input_schema:
+  type: object
+  properties:
+    client_name:
+      type: string
+  required: [client_name]
+output_schema:
+  type: object
+  properties:
+    message:
+      type: string
+  required: [message]
