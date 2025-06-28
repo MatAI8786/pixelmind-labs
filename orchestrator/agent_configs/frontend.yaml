@@ -1,0 +1,13 @@
+role: "Generate basic frontend"
+input_schema:
+  type: object
+  properties:
+    title:
+      type: string
+  required: [title]
+output_schema:
+  type: object
+  properties:
+    html:
+      type: string
+  required: [html]

@@ -1,0 +1,8 @@
+PyYAML
+jsonschema
+requests
+beautifulsoup4
+rembg
+onnxruntime
+opencv-python
+streamlit

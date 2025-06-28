@@ -1,0 +1,10 @@
+role: "Suggest brand palette"
+input_schema:
+  type: object
+  properties: {}
+output_schema:
+  type: object
+  properties:
+    palette:
+      type: array
+  required: [palette]
