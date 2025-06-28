@@ -6,3 +6,4 @@ rembg
 onnxruntime
 opencv-python
 streamlit
+numpy
