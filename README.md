@@ -32,3 +32,24 @@ streamlit run ui/streamlit_dashboard.py
 - `history/` – output history per agent
 - `data/feedback_db.json` – feedback data store
 - `ui/` – dashboard scaffolding
+
+## Testing
+
+You can manually test the workflow by running the orchestrator script. This will
+invoke each agent in sequence and log outputs under the `history/` directory.
+
+```bash
+python orchestrator/workflow_orchestrator.py
+```
+
+The bottom of `workflow_orchestrator.py` contains a `sample_job` dictionary
+used for this demo. Modify its values to experiment with different inputs.
+
+For an interactive test interface, start the Streamlit dashboard:
+
+```bash
+streamlit run ui/streamlit_dashboard.py
+```
+
+Enter the job details in the form and click **Run Workflow** to see the results
+within the app.
