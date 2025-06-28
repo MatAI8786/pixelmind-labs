@@ -1,7 +1,15 @@
 import os
+import sys
 import asyncio
+from pathlib import Path
 import yaml
 from typing import Any, Dict
+
+# Ensure project root is on sys.path so "agents" package can be imported when
+# running this file directly (e.g. ``python orchestrator/workflow_orchestrator.py``).
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 from agents.design.layout_agent import LayoutAgent
 from agents.design.logo_agent import LogoAgent
