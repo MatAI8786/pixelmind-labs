@@ -4,6 +4,8 @@ requests
 beautifulsoup4
 rembg
 onnxruntime
-opencv-python
+opencv-python-headless==4.9.0.80
 streamlit
-numpy
+numpy<2
+openai
+python-dotenv

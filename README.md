@@ -58,4 +58,20 @@ streamlit run ui/streamlit_dashboard.py
 ```
 
 Enter the job details in the form and click **Run Workflow** to see the results
-within the app.
+within the app. The dashboard now includes:
+
+- Sidebar navigation for running individual agents or the full workflow
+- A settings panel to paste an `OPENAI_API_KEY` at runtime
+- Live log output showing recent runs
+- A **Test All Agents** button for quick demos
+
+When an OpenAI API key is provided, content and branding agents use GPT-3.5 to
+generate richer copy and color palettes. Without a key, the app falls back to
+stub demo responses.
+
+```
+streamlit run ui/streamlit_dashboard.py
+```
+
+Use the **Settings** tab to supply the API key. See `.env.example` for the
+environment variable name.
