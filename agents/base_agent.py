@@ -1,22 +1,22 @@
 import json
-import os
-from datetime import datetime
 from typing import Any, Dict
+
+from tools.file_utils import ensure_history_dir, safe_timestamp, HISTORY_DIR
 
 class BaseAgent:
     """Base class for all agents with logging and history support."""
 
     name: str = "BaseAgent"
-    history_dir: str = "history"
+    history_dir: str = str(HISTORY_DIR)
 
     def __init__(self, name: str):
         self.name = name
-        os.makedirs(os.path.join(self.history_dir, self.name), exist_ok=True)
+        ensure_history_dir(self.name)
 
     def log(self, data: Dict[str, Any]) -> None:
         """Log JSON data to a history file with timestamp."""
-        timestamp = datetime.utcnow().isoformat()
-        path = os.path.join(self.history_dir, self.name, f"{timestamp}.json")
+        timestamp = safe_timestamp()
+        path = HISTORY_DIR / self.name / f"{timestamp}.json"
         with open(path, "w") as f:
             json.dump(data, f, indent=2)
 

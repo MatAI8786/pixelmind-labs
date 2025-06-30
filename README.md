@@ -55,6 +55,10 @@ This interface visualizes workflow graphs using React Flow.
 - `data/feedback_db.json` – feedback data store
 - `ui/` – dashboard scaffolding
 
+All agent logs and workflow outputs are stored under the `history/` directory
+using timestamped filenames. Filenames are generated with a helper that replaces
+colons with dashes so the logs work on both Windows and Linux.
+
 ## Testing
 
 You can manually test the workflow by running the orchestrator script. This will
