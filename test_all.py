@@ -162,6 +162,16 @@ def test_json_prompt_engine() -> None:
     except Exception as e:
         record("json_prompt_engine.enforce_json", False, e)
 
+
+def test_load_workflow() -> None:
+    from orchestrator.workflow_orchestrator import load_workflow, execute_workflow
+    try:
+        wf = load_workflow("web_department.json")
+        execute_workflow(wf, "demo")
+        record("workflow_orchestrator.load_workflow", True)
+    except Exception as e:
+        record("workflow_orchestrator.load_workflow", False, e)
+
 def test_ui_import() -> None:
     try:
         import ui.streamlit_dashboard  # noqa: F401
@@ -174,6 +184,7 @@ if __name__ == "__main__":
     test_agents()
     test_tools()
     test_json_prompt_engine()
+    test_load_workflow()
     test_ui_import()
     total = len(results)
     passed = sum(1 for r in results if r)

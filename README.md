@@ -18,6 +18,12 @@ pip install -r requirements.txt
 python orchestrator/workflow_orchestrator.py
 ```
 
+You can also execute a JSON workflow directly:
+
+```bash
+python orchestrator/workflow_orchestrator.py load_workflow web_department.json
+```
+
 The script automatically adjusts `sys.path` so it can be executed directly
 from the project root on any platform.
 
@@ -29,6 +35,16 @@ streamlit run ui/streamlit_dashboard.py
 
 Like the orchestrator script, the dashboard modifies `sys.path` at runtime, so
 you can launch it from the project root without setting `PYTHONPATH`.
+
+4. Launch the React Flow UI (requires Node.js):
+
+```bash
+cd ui/flow_app
+npm install
+npm run dev
+```
+
+This interface visualizes workflow graphs using React Flow.
 
 ## Project Structure
 
@@ -75,3 +91,14 @@ streamlit run ui/streamlit_dashboard.py
 
 Use the **Settings** tab to supply the API key. See `.env.example` for the
 environment variable name.
+
+## Containerized Deployment
+
+A basic Docker setup is provided for local testing.
+
+```bash
+docker build -t pixelmind .
+docker run -p 8501:8501 pixelmind
+```
+
+This image installs Python dependencies and runs the orchestrator.
