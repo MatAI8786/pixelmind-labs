@@ -7,3 +7,5 @@ __pycache__/
 
 # Streamlit uploads
 uploaded_logo.png
+
+venv/

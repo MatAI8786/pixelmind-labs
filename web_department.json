@@ -1,0 +1,82 @@
+{
+  "department": "WebDesign",
+  "nodes": [
+    {
+      "id": "start",
+      "type": "Trigger",
+      "config": {
+        "onClick": true,
+        "initialPrompt": "Begin Web Design workflow"
+      },
+      "outputs": ["select_persona"]
+    },
+    {
+      "id": "select_persona",
+      "type": "PersonaSelector",
+      "config": {
+        "personalities": ["CreativeDesigner", "UXStrategist", "BrandSpecialist"],
+        "selected": "CreativeDesigner"
+      },
+      "outputs": ["llm_main", "llm_assist"]
+    },
+    {
+      "id": "llm_main",
+      "type": "LLMNode",
+      "config": {
+        "provider": "OpenAI",
+        "model": "gpt-4",
+        "prompt_template": "System: You are a {persona}. Task: generate landing page HTML wireframe. User input: {{input}}",
+        "stream": false
+      },
+      "inputs": ["select_persona"],
+      "outputs": ["logic_gate"]
+    },
+    {
+      "id": "llm_assist",
+      "type": "LLMNode",
+      "config": {
+        "provider": "Claude",
+        "model": "claude-2",
+        "prompt_template": "System: You are an assistant to a {persona}. Task: outline color scheme and style guide for a landing page. User input: {{input}}",
+        "stream": false
+      },
+      "inputs": ["select_persona"],
+      "outputs": ["logic_gate"]
+    },
+    {
+      "id": "logic_gate",
+      "type": "Gate",
+      "config": {
+        "logic": "AND",
+        "conditions": [
+          {"node": "llm_main", "contains": "<html>"},
+          {"node": "llm_assist", "contains": "color"}
+        ]
+      },
+      "outputs": ["aggregator"]
+    },
+    {
+      "id": "aggregator",
+      "type": "AggregatorNode",
+      "config": {
+        "template": "Aggregate outputs:\nWireframe:\n{{outputs.llm_main}}\nStyle:\n{{outputs.llm_assist}}",
+        "output_format": "JSON_mode"
+      },
+      "inputs": ["logic_gate"],
+      "outputs": ["end"]
+    },
+    {
+      "id": "end",
+      "type": "Output",
+      "config": {
+        "destination": "console"
+      },
+      "inputs": ["aggregator"]
+    }
+  ],
+  "settings": {
+    "json_mode": true,
+    "save_history": "history/web_design.json",
+    "feedback_db": "data/feedback.json"
+  }
+}
