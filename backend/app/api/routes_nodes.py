@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Body
 from pydantic import BaseModel
 import openai
 
@@ -31,12 +31,13 @@ validators = {
     "binance": _validate_stub,
 }
 
-@router.post('/test/{provider}')
-def test_node(provider: str, item: KeyTest):
+@router.api_route('/test/{provider}', methods=['GET', 'POST'])
+def test_node(provider: str, item: KeyTest | None = Body(default=None)):
     validator = validators.get(provider.lower())
     if not validator:
         return {"status": "error", "error": "unsupported provider"}
-    result = validator(item.key or "")
+    key = item.key if item else ""
+    result = validator(key)
     if result == "success":
         return {"status": "success"}
     return {"status": "error", "error": result.replace('error: ', '')}
