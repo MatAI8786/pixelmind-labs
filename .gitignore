@@ -1,11 +1,17 @@
-# Ignore environment files
+# Environment files
 .env
 
-# Python cache
+# Python
 __pycache__/
 *.pyc
-
-# Streamlit uploads
-uploaded_logo.png
-
 venv/
+
+# Node
+node_modules/
+.next/
+
+# VS Code
+.vscode/
+
+# Other
+uploaded_logo.png
