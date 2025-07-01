@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext } from 'react';
-import { Node, Edge } from 'react-flow-renderer';
+import { Node, Edge } from 'reactflow';
 
 interface WorkflowContextType {
   nodes: Node[];
