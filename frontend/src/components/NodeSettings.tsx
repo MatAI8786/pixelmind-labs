@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const NODES = [
   'google',
@@ -15,30 +15,32 @@ const NODES = [
 
 export default function NodeSettings() {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-  const [inputs, setInputs] = useState<Record<string, string>>({});
+  const [statuses, setStatuses] = useState<Record<string, string>>({});
   const [messages, setMessages] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const testKey = async (node: string) => {
+  const fetchStatus = async (node: string) => {
     try {
-      const res = await fetch(`${baseUrl}/api/test/${node}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: inputs[node] || '' }),
-      });
+      const res = await fetch(`${baseUrl}/api/test/${node}`);
       const data = await res.json();
       if (res.ok && data.status === 'success') {
-        setMessages((m) => ({ ...m, [node]: 'Success' }));
+        setStatuses((s) => ({ ...s, [node]: 'ok' }));
         setErrors((e) => ({ ...e, [node]: '' }));
       } else {
+        setStatuses((s) => ({ ...s, [node]: 'error' }));
         setErrors((e) => ({ ...e, [node]: data.error || 'Error' }));
-        setMessages((m) => ({ ...m, [node]: '' }));
       }
+      setMessages((m) => ({ ...m, [node]: JSON.stringify(data, null, 2) }));
     } catch (e: any) {
+      setStatuses((s) => ({ ...s, [node]: 'error' }));
       setErrors((er) => ({ ...er, [node]: e.message }));
       setMessages((m) => ({ ...m, [node]: '' }));
     }
   };
+
+  useEffect(() => {
+    NODES.forEach((n) => fetchStatus(n));
+  }, [baseUrl]);
 
   return (
     <div>
@@ -47,25 +49,29 @@ export default function NodeSettings() {
         {NODES.map((n) => (
           <li key={n}>
             <details className="border rounded p-2 dark:border-gray-600">
-              <summary className="cursor-pointer capitalize">{n}</summary>
-              <div className="mt-2 space-y-2">
-                <input
-                  type="password"
-                  placeholder="API Key"
-                  className="border w-full p-1 bg-white dark:bg-gray-700 text-black dark:text-white caret-blue-500 dark:border-gray-600"
-                  value={inputs[n] || ''}
-                  onChange={(e) =>
-                    setInputs({ ...inputs, [n]: e.target.value })
-                  }
+              <summary className="cursor-pointer capitalize flex items-center">
+                <span
+                  className={`h-2 w-2 rounded-full mr-2 ${
+                    statuses[n] === 'ok'
+                      ? 'bg-green-500'
+                      : statuses[n] === 'error'
+                      ? 'bg-red-500'
+                      : 'bg-gray-400'
+                  }`}
                 />
+                {n}
+              </summary>
+              <div className="mt-2 space-y-2">
                 <button
                   className="bg-blue-500 text-white px-2 py-1 rounded"
-                  onClick={() => testKey(n)}
+                  onClick={() => fetchStatus(n)}
                 >
-                  Test Key
+                  Test Endpoint
                 </button>
                 {messages[n] && (
-                  <div className="text-sm text-green-500">{messages[n]}</div>
+                  <pre className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+                    {messages[n]}
+                  </pre>
                 )}
                 {errors[n] && (
                   <pre className="text-sm text-red-500 whitespace-pre-wrap">

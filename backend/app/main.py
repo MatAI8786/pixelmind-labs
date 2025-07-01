@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from .api import (
     routes_workflows,
     routes_keys,
@@ -8,6 +9,13 @@ from .api import (
 )
 
 app = FastAPI(title="PixelMind Labs API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(routes_workflows.router, prefix="/api/workflows", tags=["workflows"])
 app.include_router(routes_keys.router, prefix="/api/keys", tags=["keys"])
