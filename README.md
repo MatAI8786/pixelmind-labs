@@ -37,6 +37,7 @@ The main packages are:
 * **fastapi** – web framework for the API
 * **uvicorn** – ASGI server used to run FastAPI
 * **pydantic** – data validation
+* **pydantic-settings** – configuration management
 * **python-dotenv** – environment variable loading
 * **openai** – integration with OpenAI APIs
 
@@ -132,3 +133,8 @@ the server via `/api/workflows/save`.
 Drag nodes such as LLM, Input, Output, Tool and Condition from the left palette
 onto the canvas. Each node type has its own configuration options which are
 serialized when exporting workflows.
+
+## Dark Mode
+
+The UI defaults to a dark theme. You can modify Tailwind classes or the
+`_document.tsx` file if you wish to change this behavior.

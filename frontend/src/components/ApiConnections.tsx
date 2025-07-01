@@ -15,6 +15,7 @@ export default function ApiConnections() {
   const [keyInput, setKeyInput] = useState('');
   const [editing, setEditing] = useState<string | null>(null);
   const [message, setMessage] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const [health, setHealth] = useState<Record<string, string>>({});
 
   const fetchKeys = async () => {
@@ -23,9 +24,13 @@ export default function ApiConnections() {
       if (res.ok) {
         const data = await res.json();
         setKeys(data);
+        setError(null);
+      } else {
+        const text = await res.text();
+        setError(text || res.statusText);
       }
-    } catch {
-      // ignore errors
+    } catch (e: any) {
+      setError(e.message);
     }
   };
 
@@ -35,9 +40,13 @@ export default function ApiConnections() {
       if (res.ok) {
         const data = await res.json();
         setHealth(data);
+        setError(null);
+      } else {
+        const text = await res.text();
+        setError(text || res.statusText);
       }
-    } catch {
-      // ignore
+    } catch (e: any) {
+      setError(e.message);
     }
   };
 
@@ -60,43 +69,59 @@ export default function ApiConnections() {
         setKeyInput('');
         setEditing(null);
         setMessage('Saved');
+        setError(null);
         fetchKeys();
         fetchHealth();
       } else {
+        const text = await res.text();
+        setError(text || res.statusText);
         setMessage('Error saving');
       }
-    } catch {
+    } catch (e: any) {
+      setError(e.message);
       setMessage('Error saving');
     }
   };
 
   const deleteKey = async (prov: string) => {
     try {
-      await fetch(`${baseUrl}/api/keys/delete`, {
+      const res = await fetch(`${baseUrl}/api/keys/delete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ provider: prov }),
       });
+      if (!res.ok) {
+        const text = await res.text();
+        setError(text || res.statusText);
+      } else {
+        setError(null);
+      }
       sessionStorage.removeItem(`key_${prov}`);
       fetchKeys();
       fetchHealth();
-    } catch {
-      // ignore
+    } catch (e: any) {
+      setError(e.message);
     }
   };
 
   const validateKey = async (prov: string) => {
     const stored = sessionStorage.getItem(`key_${prov}`);
     try {
-      await fetch(`${baseUrl}/api/keys/validate`, {
+      const res = await fetch(`${baseUrl}/api/keys/validate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ provider: prov, key: stored }),
       });
+      if (!res.ok) {
+        const text = await res.text();
+        setError(text || res.statusText);
+      } else {
+        setError(null);
+      }
       fetchKeys();
       fetchHealth();
-    } catch {
-      // ignore
+    } catch (e: any) {
+      setError(e.message);
     }
   };
 
@@ -173,6 +198,7 @@ export default function ApiConnections() {
           </button>
         </div>
         {message && <div className="text-sm text-gray-600">{message}</div>}
+        {error && <div className="text-sm text-red-500 whitespace-pre-wrap">Error: {error}</div>}
       </div>
     </div>
   );

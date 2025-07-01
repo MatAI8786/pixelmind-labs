@@ -6,6 +6,7 @@ interface HealthData {
 
 export default function ApiStatus() {
   const [data, setData] = useState<HealthData | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   useEffect(() => {
@@ -15,10 +16,14 @@ export default function ApiStatus() {
         if (res.ok) {
           const json = await res.json();
           setData(json);
+          setError(null);
         } else {
+          const text = await res.text();
+          setError(text || res.statusText);
           setData(null);
         }
-      } catch {
+      } catch (e: any) {
+        setError(e.message);
         setData(null);
       }
     }
@@ -29,7 +34,7 @@ export default function ApiStatus() {
     return (
       <div>
         <h3 className="font-bold mb-2">API Status</h3>
-        <p className="text-red-500">Unable to fetch status</p>
+        <p className="text-red-500">{error ? `Error: ${error}` : 'Unable to fetch status'}</p>
       </div>
     );
   }
