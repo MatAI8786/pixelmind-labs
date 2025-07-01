@@ -2,6 +2,7 @@ version: '3.8'
 services:
   backend:
     build: ./backend
+    command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
     volumes:
       - ./backend:/app
       - ./workflows:/app/workflows
@@ -10,9 +11,11 @@ services:
     ports:
       - '8000:8000'
   frontend:
-    build: ./frontend
+    image: node:20
+    working_dir: /app
     volumes:
       - ./frontend:/app
+    command: npm run dev
     ports:
       - '3000:3000'
     depends_on:
