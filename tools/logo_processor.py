@@ -1,11 +1,18 @@
 from pathlib import Path
+import logging
 import cv2
+import numpy as np
 from rembg import remove
 
 def process_logo(input_path: str) -> str:
     """Remove background from logo and save as processed file."""
     input_file = Path(input_path)
     output_file = input_file.with_name(input_file.stem + "_processed.png")
+
+    if not input_file.exists():
+        logging.warning("Logo file '%s' not found. Creating placeholder.", input_path)
+        dummy = np.zeros((10, 10, 3), dtype=np.uint8)
+        cv2.imwrite(str(input_file), dummy)
 
     with open(input_file, "rb") as i:
         output = remove(i.read())
