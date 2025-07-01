@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
 import download from 'downloadjs';
+import ApiStatus from '../components/ApiStatus';
 import {
   useNodesState,
   useEdgesState,
@@ -107,6 +108,7 @@ function FlowBuilder() {
           >
             Export
           </button>
+          <ApiStatus />
         </aside>
         <main className="flex-1 relative" ref={reactFlowWrapper}>
           <ReactFlow
