@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
+import Link from 'next/link';
 import download from 'downloadjs';
 import ApiStatus from '../components/ApiStatus';
 import {
@@ -108,6 +109,9 @@ function FlowBuilder() {
           >
             Export
           </button>
+          <Link href="/settings" className="block bg-white border rounded text-center px-2 py-1">
+            Settings
+          </Link>
           <ApiStatus />
         </aside>
         <main className="flex-1 relative" ref={reactFlowWrapper}>
