@@ -8,7 +8,10 @@ load_dotenv(BASE_DIR / '..' / '..' / '.env')
 
 class Settings(BaseSettings):
     OPENAI_API_KEY: str | None = None
-    OTHER_API_KEY: str | None = None
+    ANTHROPIC_API_KEY: str | None = None
+    MISTRAL_API_KEY: str | None = None
+    PAYPAL_API_KEY: str | None = None
+    BINANCE_API_KEY: str | None = None
 
     class Config:
         env_file = BASE_DIR / '..' / '..' / '.env'

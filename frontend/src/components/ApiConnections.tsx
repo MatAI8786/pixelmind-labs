@@ -15,6 +15,7 @@ export default function ApiConnections() {
   const [keyInput, setKeyInput] = useState('');
   const [editing, setEditing] = useState<string | null>(null);
   const [message, setMessage] = useState('');
+  const [health, setHealth] = useState<Record<string, string>>({});
 
   const fetchKeys = async () => {
     try {
@@ -28,8 +29,21 @@ export default function ApiConnections() {
     }
   };
 
+  const fetchHealth = async () => {
+    try {
+      const res = await fetch(`${baseUrl}/api/health`);
+      if (res.ok) {
+        const data = await res.json();
+        setHealth(data);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
   useEffect(() => {
     fetchKeys();
+    fetchHealth();
   }, [baseUrl]);
 
   const saveKey = async () => {
@@ -47,6 +61,7 @@ export default function ApiConnections() {
         setEditing(null);
         setMessage('Saved');
         fetchKeys();
+        fetchHealth();
       } else {
         setMessage('Error saving');
       }
@@ -64,6 +79,7 @@ export default function ApiConnections() {
       });
       sessionStorage.removeItem(`key_${prov}`);
       fetchKeys();
+      fetchHealth();
     } catch {
       // ignore
     }
@@ -78,6 +94,7 @@ export default function ApiConnections() {
         body: JSON.stringify({ provider: prov, key: stored }),
       });
       fetchKeys();
+      fetchHealth();
     } catch {
       // ignore
     }
@@ -87,36 +104,42 @@ export default function ApiConnections() {
     <div>
       <h3 className="font-bold mb-2">API Connections</h3>
       <ul className="space-y-1">
-        {keys.map((k) => (
-          <li key={k.provider} className="flex items-center space-x-2">
-            <span className="w-24 capitalize">{k.provider}</span>
-            <span>{k.status}</span>
-            {k.last_checked && (
-              <span className="text-xs text-gray-500">{k.last_checked}</span>
-            )}
-            <button
-              className="text-blue-500 text-sm"
-              onClick={() => {
-                setProvider(k.provider);
-                setEditing(k.provider);
-              }}
-            >
-              Edit
-            </button>
-            <button
-              className="text-red-500 text-sm"
-              onClick={() => deleteKey(k.provider)}
-            >
-              Delete
-            </button>
-            <button
-              className="text-green-500 text-sm"
-              onClick={() => validateKey(k.provider)}
-            >
-              Test Key
-            </button>
-          </li>
-        ))}
+        {keys.map((k) => {
+          const h = health[k.provider];
+          const color =
+            h === 'ok' ? 'bg-green-500' : h === 'missing_key' ? 'bg-yellow-500' : 'bg-red-500';
+          return (
+            <li key={k.provider} className="flex items-center space-x-2">
+              <span className={`h-2 w-2 rounded-full ${color}`} />
+              <span className="w-24 capitalize">{k.provider}</span>
+              <span>{k.status}</span>
+              {k.last_checked && (
+                <span className="text-xs text-gray-500">{k.last_checked}</span>
+              )}
+              <button
+                className="text-blue-500 text-sm"
+                onClick={() => {
+                  setProvider(k.provider);
+                  setEditing(k.provider);
+                }}
+              >
+                Edit
+              </button>
+              <button
+                className="text-red-500 text-sm"
+                onClick={() => deleteKey(k.provider)}
+              >
+                Delete
+              </button>
+              <button
+                className="text-green-500 text-sm"
+                onClick={() => validateKey(k.provider)}
+              >
+                Test Key
+              </button>
+            </li>
+          );
+        })}
       </ul>
 
       <div className="mt-4 space-y-2">

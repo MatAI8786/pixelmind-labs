@@ -94,3 +94,28 @@ import and export workflows through the web interface's top bar.
 To create new nodes for the editor, add React components under
 `frontend/src/components/nodes` and the corresponding execution logic under
 `backend/app/engine`.
+
+## API Health Check
+
+Open the **Settings → API Connections** page to view live status indicators for
+each configured API provider. The backend `/api/health` endpoint tests
+connectivity for services like OpenAI, Anthropic and others based on the keys in
+your `.env` file.
+
+## Testing LLM Nodes
+
+When editing a workflow, select an LLM node and press **Test Node** in the side
+panel. The frontend sends the node configuration to `/api/llm/test` and displays
+the model's reply or an error message.
+
+## Saving and Importing Workflows
+
+Use the **Export JSON** button to download the current canvas. **Import JSON**
+loads a file back into the editor, while **Save Workflow** stores the workflow on
+the server via `/api/workflows/save`.
+
+## Extending the Node Palette
+
+Drag nodes such as LLM, Input, Output, Tool and Condition from the left palette
+onto the canvas. Each node type has its own configuration options which are
+serialized when exporting workflows.
