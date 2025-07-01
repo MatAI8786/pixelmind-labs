@@ -44,6 +44,7 @@ function FlowBuilder() {
   const [nodes, setNodes, onNodesChange] = useNodesState<CustomNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const { project } = useReactFlow();
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -142,31 +143,48 @@ function FlowBuilder() {
   const saveWorkflow = async () => {
     const name = prompt('Workflow name');
     if (!name) return;
-    await fetch(`${baseUrl}/api/workflows/save`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, graph: { nodes, edges } }),
-    });
+    try {
+      const res = await fetch(`${baseUrl}/api/workflows/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, graph: { nodes, edges } }),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || res.statusText);
+      }
+      setSaveMessage('Saved');
+    } catch (e: any) {
+      setSaveMessage(`Error: ${e.message}`);
+    }
   };
 
   const [testResult, setTestResult] = useState<string | null>(null);
 
   const testLLM = async () => {
     if (!selectedNode) return;
-    const res = await fetch(`${baseUrl}/api/llm/test`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(selectedNode.data),
-    });
-    const json = await res.json();
-    setTestResult(json.result || json.error);
+    try {
+      const res = await fetch(`${baseUrl}/api/llm/test`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(selectedNode.data),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || res.statusText);
+      }
+      const json = await res.json();
+      setTestResult(json.result);
+    } catch (e: any) {
+      setTestResult(`Error: ${e.message}`);
+    }
   };
 
   const renderConfigPanel = () => {
     if (!selectedNode) return null;
     if (selectedNode.type === 'llm') {
       return (
-        <aside className="absolute right-0 top-0 w-72 h-full bg-white border-l p-4 overflow-y-auto">
+        <aside className="absolute right-0 top-0 w-72 h-full bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-600 p-4 overflow-y-auto text-black dark:text-white">
           <h2 className="font-bold mb-2">LLM Node</h2>
           <label className="block text-sm">Title</label>
           <input
@@ -230,7 +248,7 @@ function FlowBuilder() {
     if (selectedNode.type === 'input') {
       const data = selectedNode.data as InputNodeData;
       return (
-        <aside className="absolute right-0 top-0 w-72 h-full bg-white border-l p-4 overflow-y-auto">
+        <aside className="absolute right-0 top-0 w-72 h-full bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-600 p-4 overflow-y-auto text-black dark:text-white">
           <h2 className="font-bold mb-2">Input Node</h2>
           <label className="block text-sm">Title</label>
           <input
@@ -251,7 +269,7 @@ function FlowBuilder() {
     if (selectedNode.type === 'output') {
       const data = selectedNode.data as OutputNodeData;
       return (
-        <aside className="absolute right-0 top-0 w-72 h-full bg-white border-l p-4 overflow-y-auto">
+        <aside className="absolute right-0 top-0 w-72 h-full bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-600 p-4 overflow-y-auto text-black dark:text-white">
           <h2 className="font-bold mb-2">Output Node</h2>
           <label className="block text-sm">Title</label>
           <input
@@ -265,7 +283,7 @@ function FlowBuilder() {
     if (selectedNode.type === 'tool') {
       const data = selectedNode.data as ToolNodeData;
       return (
-        <aside className="absolute right-0 top-0 w-72 h-full bg-white border-l p-4 overflow-y-auto">
+        <aside className="absolute right-0 top-0 w-72 h-full bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-600 p-4 overflow-y-auto text-black dark:text-white">
           <h2 className="font-bold mb-2">Tool Node</h2>
           <label className="block text-sm">Title</label>
           <input
@@ -285,7 +303,7 @@ function FlowBuilder() {
     if (selectedNode.type === 'condition') {
       const data = selectedNode.data as ConditionNodeData;
       return (
-        <aside className="absolute right-0 top-0 w-72 h-full bg-white border-l p-4 overflow-y-auto">
+        <aside className="absolute right-0 top-0 w-72 h-full bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-600 p-4 overflow-y-auto text-black dark:text-white">
           <h2 className="font-bold mb-2">Condition Node</h2>
           <label className="block text-sm">Title</label>
           <input
@@ -308,37 +326,37 @@ function FlowBuilder() {
 
   return (
     <div className="flex h-screen">
-        <aside className="w-48 bg-gray-100 p-4 space-y-2">
+        <aside className="w-48 bg-gray-100 dark:bg-gray-900 p-4 space-y-2 text-black dark:text-white">
           <div
-            className="cursor-grab p-2 bg-white border rounded text-center"
+            className="cursor-grab p-2 bg-white dark:bg-gray-700 border rounded text-center dark:border-gray-600 dark:text-white"
             onDragStart={(e) => onDragStart(e, 'llm')}
             draggable
           >
             + LLM
           </div>
           <div
-            className="cursor-grab p-2 bg-white border rounded text-center"
+            className="cursor-grab p-2 bg-white dark:bg-gray-700 border rounded text-center dark:border-gray-600 dark:text-white"
             onDragStart={(e) => onDragStart(e, 'input')}
             draggable
           >
             + Input
           </div>
           <div
-            className="cursor-grab p-2 bg-white border rounded text-center"
+            className="cursor-grab p-2 bg-white dark:bg-gray-700 border rounded text-center dark:border-gray-600 dark:text-white"
             onDragStart={(e) => onDragStart(e, 'output')}
             draggable
           >
             + Output
           </div>
           <div
-            className="cursor-grab p-2 bg-white border rounded text-center"
+            className="cursor-grab p-2 bg-white dark:bg-gray-700 border rounded text-center dark:border-gray-600 dark:text-white"
             onDragStart={(e) => onDragStart(e, 'tool')}
             draggable
           >
             + Tool
           </div>
           <div
-            className="cursor-grab p-2 bg-white border rounded text-center"
+            className="cursor-grab p-2 bg-white dark:bg-gray-700 border rounded text-center dark:border-gray-600 dark:text-white"
             onDragStart={(e) => onDragStart(e, 'condition')}
             draggable
           >
@@ -366,12 +384,17 @@ function FlowBuilder() {
           >
             Save Workflow
           </button>
-          <Link href="/settings" className="block bg-white border rounded text-center px-2 py-1">
+          {saveMessage && (
+            <div className="text-sm whitespace-pre-wrap mt-1 text-black dark:text-white">
+              {saveMessage}
+            </div>
+          )}
+          <Link href="/settings" className="block bg-white dark:bg-gray-700 border rounded text-center px-2 py-1 dark:border-gray-600 dark:text-white">
             Settings
           </Link>
           <ApiStatus />
         </aside>
-        <main className="flex-1 relative" ref={reactFlowWrapper}>
+        <main className="flex-1 relative dark:bg-gray-900" ref={reactFlowWrapper}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
