@@ -5,3 +5,10 @@
 body {
   cursor: default;
 }
+
+input,
+textarea,
+select {
+  @apply bg-white text-black border dark:bg-gray-700 dark:text-white dark:border-gray-600;
+  caret-color: #3b82f6; /* blue-500 */
+}
