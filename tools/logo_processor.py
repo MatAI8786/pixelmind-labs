@@ -1,4 +1,5 @@
 from pathlib import Path
+import logging
 import cv2
 import numpy as np
 from rembg import remove
@@ -9,7 +10,7 @@ def process_logo(input_path: str) -> str:
     output_file = input_file.with_name(input_file.stem + "_processed.png")
 
     if not input_file.exists():
-        # create a dummy logo file if missing
+        logging.warning("Logo file '%s' not found. Creating placeholder.", input_path)
         dummy = np.zeros((10, 10, 3), dtype=np.uint8)
         cv2.imwrite(str(input_file), dummy)
 
