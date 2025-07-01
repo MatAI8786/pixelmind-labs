@@ -16,25 +16,43 @@ import {
 } from 'reactflow';
 import { WorkflowProvider } from '../state/workflowContext';
 import LLMNode, { LLMNodeData } from '../components/nodes/LLMNode';
+import InputNode, { InputNodeData } from '../components/nodes/InputNode';
+import OutputNode, { OutputNodeData } from '../components/nodes/OutputNode';
+import ToolNode, { ToolNodeData } from '../components/nodes/ToolNode';
+import ConditionNode, { ConditionNodeData } from '../components/nodes/ConditionNode';
 import 'reactflow/dist/style.css';
 
 const ReactFlow = dynamic(() => import('reactflow'), { ssr: false });
 
-const nodeTypes = { llm: LLMNode };
+const nodeTypes = {
+  llm: LLMNode,
+  input: InputNode,
+  output: OutputNode,
+  tool: ToolNode,
+  condition: ConditionNode,
+};
+
+type CustomNodeData =
+  | LLMNodeData
+  | InputNodeData
+  | OutputNodeData
+  | ToolNodeData
+  | ConditionNodeData;
 
 function FlowBuilder() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const [nodes, setNodes, onNodesChange] = useNodesState<LLMNodeData>([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<CustomNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const { project } = useReactFlow();
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   const onConnect = useCallback((params: Connection) =>
     setEdges((eds) => addEdge(params, eds)),
   []);
 
-  const onDragStart = (event: React.DragEvent) => {
-    event.dataTransfer.setData('application/reactflow', 'llm');
+  const onDragStart = (event: React.DragEvent, type: string) => {
+    event.dataTransfer.setData('application/reactflow', type);
     event.dataTransfer.effectAllowed = 'move';
   };
 
@@ -48,18 +66,30 @@ function FlowBuilder() {
         x: event.clientX - bounds.left,
         y: event.clientY - bounds.top,
       });
-      const newNode: Node<LLMNodeData> = {
-        id: crypto.randomUUID(),
-        type,
-        position,
-        data: {
+      let data: any = {};
+      if (type === 'llm') {
+        data = {
           title: 'LLM',
           prompt: '',
           model: 'gpt-3.5-turbo',
           temperature: 1,
           maxTokens: 256,
           provider: 'openai',
-        },
+        };
+      } else if (type === 'input') {
+        data = { title: 'Input', value: '' };
+      } else if (type === 'output') {
+        data = { title: 'Output' };
+      } else if (type === 'tool') {
+        data = { title: 'Tool', tool: '' };
+      } else if (type === 'condition') {
+        data = { title: 'Condition', expression: '' };
+      }
+      const newNode: Node<CustomNodeData> = {
+        id: crypto.randomUUID(),
+        type,
+        position,
+        data,
       };
       setNodes((nds) => [...nds, newNode]);
     },
@@ -76,10 +106,10 @@ function FlowBuilder() {
   }, []);
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) as
-    | Node<LLMNodeData>
+    | Node<CustomNodeData>
     | undefined;
 
-  const updateNodeData = (id: string, data: Partial<LLMNodeData>) => {
+  const updateNodeData = (id: string, data: Partial<CustomNodeData>) => {
     setNodes((nds) =>
       nds.map((n) => (n.id === id ? { ...n, data: { ...n.data, ...data } } : n)),
     );
@@ -93,21 +123,248 @@ function FlowBuilder() {
     );
   };
 
+  const importWorkflow = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const json = JSON.parse(reader.result as string);
+        setNodes(json.nodes || []);
+        setEdges(json.edges || []);
+      } catch {
+        // ignore parse errors
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const saveWorkflow = async () => {
+    const name = prompt('Workflow name');
+    if (!name) return;
+    await fetch(`${baseUrl}/api/workflows/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, graph: { nodes, edges } }),
+    });
+  };
+
+  const [testResult, setTestResult] = useState<string | null>(null);
+
+  const testLLM = async () => {
+    if (!selectedNode) return;
+    const res = await fetch(`${baseUrl}/api/llm/test`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(selectedNode.data),
+    });
+    const json = await res.json();
+    setTestResult(json.result || json.error);
+  };
+
+  const renderConfigPanel = () => {
+    if (!selectedNode) return null;
+    if (selectedNode.type === 'llm') {
+      return (
+        <aside className="absolute right-0 top-0 w-72 h-full bg-white border-l p-4 overflow-y-auto">
+          <h2 className="font-bold mb-2">LLM Node</h2>
+          <label className="block text-sm">Title</label>
+          <input
+            className="border w-full mb-2 p-1"
+            value={(selectedNode.data as LLMNodeData).title}
+            onChange={(e) => updateNodeData(selectedNode.id, { title: e.target.value })}
+          />
+          <label className="block text-sm">Prompt</label>
+          <textarea
+            className="border w-full mb-2 p-1"
+            rows={4}
+            value={(selectedNode.data as LLMNodeData).prompt}
+            onChange={(e) => updateNodeData(selectedNode.id, { prompt: e.target.value })}
+          />
+          <label className="block text-sm">Model</label>
+          <select
+            className="border w-full mb-2 p-1"
+            value={(selectedNode.data as LLMNodeData).model}
+            onChange={(e) => updateNodeData(selectedNode.id, { model: e.target.value })}
+          >
+            <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+            <option value="gpt-4o">gpt-4o</option>
+            <option value="gpt-4">gpt-4</option>
+          </select>
+          <label className="block text-sm">Temperature: {(selectedNode.data as LLMNodeData).temperature}</label>
+          <input
+            type="range"
+            min={0}
+            max={2}
+            step={0.1}
+            className="w-full mb-2"
+            value={(selectedNode.data as LLMNodeData).temperature}
+            onChange={(e) =>
+              updateNodeData(selectedNode.id, { temperature: parseFloat(e.target.value) })
+            }
+          />
+          <label className="block text-sm">Max Tokens</label>
+          <input
+            type="number"
+            className="border w-full mb-2 p-1"
+            value={(selectedNode.data as LLMNodeData).maxTokens}
+            onChange={(e) =>
+              updateNodeData(selectedNode.id, { maxTokens: parseInt(e.target.value, 10) })
+            }
+          />
+          <label className="block text-sm">Provider</label>
+          <select
+            className="border w-full mb-2 p-1"
+            value={(selectedNode.data as LLMNodeData).provider}
+            onChange={(e) => updateNodeData(selectedNode.id, { provider: e.target.value })}
+          >
+            <option value="openai">OpenAI</option>
+          </select>
+          <button onClick={testLLM} className="bg-blue-500 text-white px-2 py-1 rounded mb-2 w-full">
+            Test Node
+          </button>
+          {testResult && <pre className="whitespace-pre-wrap text-xs border p-2">{testResult}</pre>}
+        </aside>
+      );
+    }
+    if (selectedNode.type === 'input') {
+      const data = selectedNode.data as InputNodeData;
+      return (
+        <aside className="absolute right-0 top-0 w-72 h-full bg-white border-l p-4 overflow-y-auto">
+          <h2 className="font-bold mb-2">Input Node</h2>
+          <label className="block text-sm">Title</label>
+          <input
+            className="border w-full mb-2 p-1"
+            value={data.title}
+            onChange={(e) => updateNodeData(selectedNode.id, { title: e.target.value })}
+          />
+          <label className="block text-sm">Value</label>
+          <textarea
+            className="border w-full mb-2 p-1"
+            rows={3}
+            value={data.value}
+            onChange={(e) => updateNodeData(selectedNode.id, { value: e.target.value })}
+          />
+        </aside>
+      );
+    }
+    if (selectedNode.type === 'output') {
+      const data = selectedNode.data as OutputNodeData;
+      return (
+        <aside className="absolute right-0 top-0 w-72 h-full bg-white border-l p-4 overflow-y-auto">
+          <h2 className="font-bold mb-2">Output Node</h2>
+          <label className="block text-sm">Title</label>
+          <input
+            className="border w-full mb-2 p-1"
+            value={data.title}
+            onChange={(e) => updateNodeData(selectedNode.id, { title: e.target.value })}
+          />
+        </aside>
+      );
+    }
+    if (selectedNode.type === 'tool') {
+      const data = selectedNode.data as ToolNodeData;
+      return (
+        <aside className="absolute right-0 top-0 w-72 h-full bg-white border-l p-4 overflow-y-auto">
+          <h2 className="font-bold mb-2">Tool Node</h2>
+          <label className="block text-sm">Title</label>
+          <input
+            className="border w-full mb-2 p-1"
+            value={data.title}
+            onChange={(e) => updateNodeData(selectedNode.id, { title: e.target.value })}
+          />
+          <label className="block text-sm">Tool Name</label>
+          <input
+            className="border w-full mb-2 p-1"
+            value={data.tool}
+            onChange={(e) => updateNodeData(selectedNode.id, { tool: e.target.value })}
+          />
+        </aside>
+      );
+    }
+    if (selectedNode.type === 'condition') {
+      const data = selectedNode.data as ConditionNodeData;
+      return (
+        <aside className="absolute right-0 top-0 w-72 h-full bg-white border-l p-4 overflow-y-auto">
+          <h2 className="font-bold mb-2">Condition Node</h2>
+          <label className="block text-sm">Title</label>
+          <input
+            className="border w-full mb-2 p-1"
+            value={data.title}
+            onChange={(e) => updateNodeData(selectedNode.id, { title: e.target.value })}
+          />
+          <label className="block text-sm">Expression</label>
+          <textarea
+            className="border w-full mb-2 p-1"
+            rows={3}
+            value={data.expression}
+            onChange={(e) => updateNodeData(selectedNode.id, { expression: e.target.value })}
+          />
+        </aside>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="flex h-screen">
-        <aside className="w-40 bg-gray-100 p-4 space-y-2">
+        <aside className="w-48 bg-gray-100 p-4 space-y-2">
           <div
             className="cursor-grab p-2 bg-white border rounded text-center"
-            onDragStart={onDragStart}
+            onDragStart={(e) => onDragStart(e, 'llm')}
             draggable
           >
             + LLM
+          </div>
+          <div
+            className="cursor-grab p-2 bg-white border rounded text-center"
+            onDragStart={(e) => onDragStart(e, 'input')}
+            draggable
+          >
+            + Input
+          </div>
+          <div
+            className="cursor-grab p-2 bg-white border rounded text-center"
+            onDragStart={(e) => onDragStart(e, 'output')}
+            draggable
+          >
+            + Output
+          </div>
+          <div
+            className="cursor-grab p-2 bg-white border rounded text-center"
+            onDragStart={(e) => onDragStart(e, 'tool')}
+            draggable
+          >
+            + Tool
+          </div>
+          <div
+            className="cursor-grab p-2 bg-white border rounded text-center"
+            onDragStart={(e) => onDragStart(e, 'condition')}
+            draggable
+          >
+            + Condition
           </div>
           <button
             onClick={exportWorkflow}
             className="w-full bg-blue-500 text-white px-2 py-1 rounded"
           >
-            Export
+            Export JSON
+          </button>
+          <label className="w-full block">
+            <span className="sr-only">Import</span>
+            <input
+              type="file"
+              accept="application/json"
+              className="hidden"
+              onChange={importWorkflow}
+            />
+            <span className="cursor-pointer w-full inline-block bg-blue-500 text-white px-2 py-1 rounded text-center">Import JSON</span>
+          </label>
+          <button
+            onClick={saveWorkflow}
+            className="w-full bg-blue-500 text-white px-2 py-1 rounded"
+          >
+            Save Workflow
           </button>
           <Link href="/settings" className="block bg-white border rounded text-center px-2 py-1">
             Settings
@@ -127,75 +384,7 @@ function FlowBuilder() {
             onNodeClick={onNodeClick}
             className="h-full"
           />
-          {selectedNode && selectedNode.type === 'llm' && (
-            <aside className="absolute right-0 top-0 w-72 h-full bg-white border-l p-4 overflow-y-auto">
-              <h2 className="font-bold mb-2">LLM Node</h2>
-              <label className="block text-sm">Title</label>
-              <input
-                className="border w-full mb-2 p-1"
-                value={selectedNode.data.title}
-                onChange={(e) =>
-                  updateNodeData(selectedNode.id, { title: e.target.value })
-                }
-              />
-              <label className="block text-sm">Prompt</label>
-              <textarea
-                className="border w-full mb-2 p-1"
-                rows={4}
-                value={selectedNode.data.prompt}
-                onChange={(e) =>
-                  updateNodeData(selectedNode.id, { prompt: e.target.value })
-                }
-              />
-              <label className="block text-sm">Model</label>
-              <select
-                className="border w-full mb-2 p-1"
-                value={selectedNode.data.model}
-                onChange={(e) =>
-                  updateNodeData(selectedNode.id, { model: e.target.value })
-                }
-              >
-                <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
-                <option value="gpt-4o">gpt-4o</option>
-                <option value="gpt-4">gpt-4</option>
-              </select>
-              <label className="block text-sm">Temperature: {selectedNode.data.temperature}</label>
-              <input
-                type="range"
-                min={0}
-                max={2}
-                step={0.1}
-                className="w-full mb-2"
-                value={selectedNode.data.temperature}
-                onChange={(e) =>
-                  updateNodeData(selectedNode.id, {
-                    temperature: parseFloat(e.target.value),
-                  })
-                }
-              />
-              <label className="block text-sm">Max Tokens</label>
-              <input
-                type="number"
-                className="border w-full mb-2 p-1"
-                value={selectedNode.data.maxTokens}
-                onChange={(e) =>
-                  updateNodeData(selectedNode.id, {
-                    maxTokens: parseInt(e.target.value, 10),
-                  })
-                }
-              />
-              <label className="block text-sm">Provider</label>
-              <select
-                className="border w-full mb-2 p-1"
-                value={selectedNode.data.provider}
-                onChange={(e) =>
-                  updateNodeData(selectedNode.id, { provider: e.target.value })
-                }
-              >
-                <option value="openai">OpenAI</option>
-              </select>
-            </aside>
-          )}
+          {renderConfigPanel()}
         </main>
       </div>
     );
