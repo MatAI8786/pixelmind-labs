@@ -8,6 +8,7 @@ import {
   useNodesState,
   useEdgesState,
   addEdge,
+  MarkerType,
   type Connection,
   type Edge,
   type Node,
@@ -30,6 +31,11 @@ const nodeTypes = {
   output: OutputNode,
   tool: ToolNode,
   condition: ConditionNode,
+};
+
+const defaultEdgeOptions = {
+  markerEnd: { type: MarkerType.ArrowClosed },
+  style: { stroke: '#ffffff' },
 };
 
 type CustomNodeData =
@@ -185,6 +191,12 @@ function FlowBuilder() {
     if (selectedNode.type === 'llm') {
       return (
         <aside className="absolute right-0 top-0 w-72 h-full bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-600 p-4 overflow-y-auto text-black dark:text-white">
+          <button
+            className="absolute top-1 right-1 text-xl text-gray-500"
+            onClick={() => setSelectedNodeId(null)}
+          >
+            &times;
+          </button>
           <h2 className="font-bold mb-2">LLM Node</h2>
           <label className="block text-sm">Title</label>
           <input
@@ -249,6 +261,12 @@ function FlowBuilder() {
       const data = selectedNode.data as InputNodeData;
       return (
         <aside className="absolute right-0 top-0 w-72 h-full bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-600 p-4 overflow-y-auto text-black dark:text-white">
+          <button
+            className="absolute top-1 right-1 text-xl text-gray-500"
+            onClick={() => setSelectedNodeId(null)}
+          >
+            &times;
+          </button>
           <h2 className="font-bold mb-2">Input Node</h2>
           <label className="block text-sm">Title</label>
           <input
@@ -270,6 +288,12 @@ function FlowBuilder() {
       const data = selectedNode.data as OutputNodeData;
       return (
         <aside className="absolute right-0 top-0 w-72 h-full bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-600 p-4 overflow-y-auto text-black dark:text-white">
+          <button
+            className="absolute top-1 right-1 text-xl text-gray-500"
+            onClick={() => setSelectedNodeId(null)}
+          >
+            &times;
+          </button>
           <h2 className="font-bold mb-2">Output Node</h2>
           <label className="block text-sm">Title</label>
           <input
@@ -284,6 +308,12 @@ function FlowBuilder() {
       const data = selectedNode.data as ToolNodeData;
       return (
         <aside className="absolute right-0 top-0 w-72 h-full bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-600 p-4 overflow-y-auto text-black dark:text-white">
+          <button
+            className="absolute top-1 right-1 text-xl text-gray-500"
+            onClick={() => setSelectedNodeId(null)}
+          >
+            &times;
+          </button>
           <h2 className="font-bold mb-2">Tool Node</h2>
           <label className="block text-sm">Title</label>
           <input
@@ -304,6 +334,12 @@ function FlowBuilder() {
       const data = selectedNode.data as ConditionNodeData;
       return (
         <aside className="absolute right-0 top-0 w-72 h-full bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-600 p-4 overflow-y-auto text-black dark:text-white">
+          <button
+            className="absolute top-1 right-1 text-xl text-gray-500"
+            onClick={() => setSelectedNodeId(null)}
+          >
+            &times;
+          </button>
           <h2 className="font-bold mb-2">Condition Node</h2>
           <label className="block text-sm">Title</label>
           <input
@@ -399,6 +435,7 @@ function FlowBuilder() {
             nodes={nodes}
             edges={edges}
             nodeTypes={nodeTypes}
+            defaultEdgeOptions={defaultEdgeOptions}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}

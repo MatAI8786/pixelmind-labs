@@ -1,43 +1,51 @@
-from fastapi import APIRouter, Body
-from pydantic import BaseModel
+from fastapi import APIRouter
+import requests
 import openai
+from ..core.settings import get_settings
 
 router = APIRouter()
 
-class KeyTest(BaseModel):
-    key: str | None = None
-
-def _validate_openai(key: str) -> str:
+def check_openai(key: str) -> tuple[bool, str | None]:
     try:
         openai.api_key = key
         openai.Model.list()
-        return "success"
+        return True, None
     except Exception as e:
-        return f"error: {e}"
+        return False, str(e)
 
-def _validate_stub(key: str) -> str:
-    return "success" if key else "error: missing key"
 
-validators = {
-    "google": _validate_stub,
-    "gemini": _validate_stub,
-    "openai": _validate_openai,
-    "etherscan": _validate_stub,
-    "tiktok": _validate_stub,
-    "gmail": _validate_stub,
-    "bscan": _validate_stub,
-    "facebook": _validate_stub,
-    "paypal": _validate_stub,
-    "binance": _validate_stub,
-}
+def check_url(url: str, headers: dict[str, str] | None = None) -> tuple[bool, str | None]:
+    try:
+        r = requests.get(url, timeout=5, headers=headers)
+        if r.status_code < 500:
+            return True, None
+        return False, f"status {r.status_code}"
+    except Exception as e:
+        return False, str(e)
 
-@router.api_route('/test/{provider}', methods=['GET', 'POST'])
-def test_node(provider: str, item: KeyTest | None = Body(default=None)):
-    validator = validators.get(provider.lower())
-    if not validator:
-        return {"status": "error", "error": "unsupported provider"}
-    key = item.key if item else ""
-    result = validator(key)
-    if result == "success":
-        return {"status": "success"}
-    return {"status": "error", "error": result.replace('error: ', '')}
+
+@router.get('/test/{provider}')
+def test_node(provider: str):
+    """Check connectivity for the given provider using env settings."""
+    settings = get_settings()
+    provider = provider.lower()
+
+    if provider == 'openai':
+        key = settings.OPENAI_API_KEY
+        if not key:
+            return {"ok": False, "error": "missing OPENAI_API_KEY"}
+        ok, err = check_openai(key)
+        return {"ok": ok, "error": err}
+
+    if provider == 'google':
+        ok, err = check_url('https://www.google.com')
+        return {"ok": ok, "error": err}
+
+    if provider == 'binance':
+        key = settings.BINANCE_API_KEY
+        if not key:
+            return {"ok": False, "error": "missing BINANCE_API_KEY"}
+        ok, err = check_url('https://api.binance.com/api/v3/ping', headers={"X-MBX-APIKEY": key})
+        return {"ok": ok, "error": err}
+
+    return {"ok": False, "error": "unsupported provider"}
