@@ -67,6 +67,19 @@ This builds the frontend and backend images and starts them. The frontend will
 be available at <http://localhost:3000> and the backend API at
 <http://localhost:8000>.
 
+### Single Command (Local)
+
+You can also run both servers locally without Docker. Install the root dev
+dependencies and launch the servers with:
+
+```bash
+npm install
+npm run dev
+```
+
+The `dev` script uses [concurrently](https://www.npmjs.com/package/concurrently)
+to start the FastAPI backend and the Next.js frontend at the same time.
+
 ### Running Manually
 
 If you prefer to run the services without Docker:
