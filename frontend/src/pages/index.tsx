@@ -10,6 +10,7 @@ import {
   type Edge,
   type Node,
   useReactFlow,
+  ReactFlowProvider,
 } from 'reactflow';
 import { WorkflowProvider } from '../state/workflowContext';
 import LLMNode, { LLMNodeData } from '../components/nodes/LLMNode';
@@ -19,9 +20,9 @@ const ReactFlow = dynamic(() => import('reactflow'), { ssr: false });
 
 const nodeTypes = { llm: LLMNode };
 
-export default function Home() {
+function FlowBuilder() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node<LLMNodeData>[]>([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<LLMNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const { project } = useReactFlow();
@@ -58,7 +59,7 @@ export default function Home() {
           provider: 'openai',
         },
       };
-      setNodes((nds) => nds.concat(newNode));
+      setNodes((nds) => [...nds, newNode]);
     },
     [project, setNodes],
   );
@@ -91,11 +92,7 @@ export default function Home() {
   };
 
   return (
-    <WorkflowProvider>
-      <Head>
-        <title>PixelMind Labs</title>
-      </Head>
-      <div className="flex h-screen">
+    <div className="flex h-screen">
         <aside className="w-40 bg-gray-100 p-4 space-y-2">
           <div
             className="cursor-grab p-2 bg-white border rounded text-center"
@@ -195,6 +192,18 @@ export default function Home() {
           )}
         </main>
       </div>
+    );
+}
+
+export default function Home() {
+  return (
+    <WorkflowProvider>
+      <ReactFlowProvider>
+        <Head>
+          <title>PixelMind Labs</title>
+        </Head>
+        <FlowBuilder />
+      </ReactFlowProvider>
     </WorkflowProvider>
   );
 }
