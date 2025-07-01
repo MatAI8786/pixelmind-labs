@@ -38,16 +38,20 @@ export default function ApiStatus() {
     <div>
       <h3 className="font-bold mb-2">API Status</h3>
       <ul className="space-y-1">
-        {Object.entries(data).map(([key, value]) => (
-          <li key={key} className="flex items-center space-x-2">
-            <span
-              className={`h-2 w-2 rounded-full ${
-                value === 'ok' ? 'bg-green-500' : 'bg-red-500'
-              }`}
-            />
-            <span>{key}</span>
-          </li>
-        ))}
+        {Object.entries(data).map(([key, value]) => {
+          const color =
+            value === 'ok'
+              ? 'bg-green-500'
+              : value === 'missing_key'
+              ? 'bg-yellow-500'
+              : 'bg-red-500';
+          return (
+            <li key={key} className="flex items-center space-x-2">
+              <span className={`h-2 w-2 rounded-full ${color}`} />
+              <span>{key}</span>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
