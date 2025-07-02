@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import ProviderTestModal from './ProviderTestModal';
 
 const PROVIDERS = [
   'google',
@@ -19,6 +20,7 @@ export default function NodeSettings() {
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [logs, setLogs] = useState<Record<string, string>>({});
   const [statuses, setStatuses] = useState<Record<string, string>>({});
+  const [showLog, setShowLog] = useState(false);
 
   useEffect(() => {
     const vals: Record<string, string> = {};
@@ -44,9 +46,11 @@ export default function NodeSettings() {
       const data = await res.json();
       setStatuses((s) => ({ ...s, [prov]: data.status || 'failed' }));
       setLogs((l) => ({ ...l, [prov]: data.logs ? data.logs.join('\n') : data.message }));
+      setShowLog(true);
     } catch (e: any) {
       setStatuses((s) => ({ ...s, [prov]: 'failed' }));
       setLogs((l) => ({ ...l, [prov]: e.message }));
+      setShowLog(true);
     }
   };
 
@@ -100,17 +104,17 @@ export default function NodeSettings() {
               onChange={(e) => handleInputChange(open, e.target.value)}
             />
             <button
-              className="bg-blue-600 text-white px-2 py-1 rounded w-full mb-2"
+              className="bg-blue-600 text-white px-2 py-1 rounded w-full"
               onClick={() => testProvider(open)}
             >
               Test Key
             </button>
-            <pre
-              className={`bg-black p-2 h-24 overflow-y-auto text-xs rounded ${statusColor(statuses[open])}`}
-            >
-              {logs[open] || ''}
-            </pre>
           </div>
+          <ProviderTestModal
+            open={showLog}
+            log={logs[open] || ''}
+            onClose={() => setShowLog(false)}
+          />
         </div>
       )}
     </div>
