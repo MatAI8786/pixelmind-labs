@@ -23,15 +23,15 @@ export default function NodeSettings() {
     try {
       const res = await fetch(`${baseUrl}/api/test/${node}`);
       const data = await res.json();
-      if (res.ok && data.ok) {
-        setStatuses((s) => ({ ...s, [node]: 'ok' }));
+      const status: string = data.status || 'failed';
+      setStatuses((s) => ({ ...s, [node]: status }));
+      if (status === 'success') {
         setErrors((e) => ({ ...e, [node]: '' }));
       } else {
-        setStatuses((s) => ({ ...s, [node]: 'error' }));
-        setErrors((e) => ({ ...e, [node]: data.error || 'Error' }));
+        setErrors((e) => ({ ...e, [node]: data.message || 'Error' }));
       }
     } catch (e: any) {
-      setStatuses((s) => ({ ...s, [node]: 'error' }));
+      setStatuses((s) => ({ ...s, [node]: 'failed' }));
       setErrors((er) => ({ ...er, [node]: e.message }));
     }
   };
@@ -74,10 +74,18 @@ export default function NodeSettings() {
               {statuses[n] && (
                 <span
                   className={`text-xs px-2 py-0.5 rounded ${
-                    statuses[n] === 'ok' ? 'bg-green-600' : 'bg-red-600'
+                    statuses[n] === 'success'
+                      ? 'bg-green-600'
+                      : statuses[n] === 'warning'
+                      ? 'bg-yellow-600'
+                      : 'bg-red-600'
                   }`}
                 >
-                  {statuses[n] === 'ok' ? '✔️ Success' : '❌ Failed'}
+                  {statuses[n] === 'success'
+                    ? '✔️ Success'
+                    : statuses[n] === 'warning'
+                    ? '⚠️ Warning'
+                    : '❌ Failed'}
                 </span>
               )}
             </div>

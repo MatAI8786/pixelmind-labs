@@ -5,3 +5,4 @@ python-dotenv
 openai
 requests
 pydantic-settings>=2.0.0
+colorama

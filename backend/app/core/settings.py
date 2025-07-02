@@ -17,6 +17,12 @@ class Settings(BaseSettings):
     OPENAI_ORG_ID: str | None = None
     ANTHROPIC_API_KEY: str | None = None
     MISTRAL_API_KEY: str | None = None
+    GEMINI_API_KEY: str | None = None
+    ETHERSCAN_API_KEY: str | None = None
+    TIKTOK_API_KEY: str | None = None
+    GMAIL_API_KEY: str | None = None
+    BSCAN_API_KEY: str | None = None
+    FACEBOOK_API_KEY: str | None = None
     PAYPAL_API_KEY: str | None = None
     PAYPAL_CLIENT_ID: str | None = None
     PAYPAL_CLIENT_SECRET: str | None = None
