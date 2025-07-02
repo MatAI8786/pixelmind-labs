@@ -16,7 +16,7 @@ export default function ApiConnections() {
   const [editing, setEditing] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [health, setHealth] = useState<Record<string, string>>({});
+  const [health, setHealth] = useState<Record<string, { status: string; msg: string }>>({});
 
   const fetchKeys = async () => {
     try {
@@ -56,8 +56,8 @@ export default function ApiConnections() {
   }, [baseUrl]);
 
   const saveKey = async () => {
-    const url = `${baseUrl}/api/keys/${editing ? 'update' : 'add'}`;
-    const body = { provider, key: keyInput };
+    const url = `${baseUrl}/api/keys/${provider}`;
+    const body = { key: keyInput };
     try {
       const res = await fetch(url, {
         method: 'POST',
@@ -132,7 +132,7 @@ export default function ApiConnections() {
         {keys.map((k) => {
           const h = health[k.provider];
           const color =
-            h === 'ok' ? 'bg-green-500' : h === 'missing_key' ? 'bg-yellow-500' : 'bg-red-500';
+            h?.status === 'ok' ? 'bg-green-500' : h?.status === 'warning' ? 'bg-yellow-500' : 'bg-red-500';
           return (
             <li key={k.provider} className="flex items-center space-x-2">
               <span className={`h-2 w-2 rounded-full ${color}`} />

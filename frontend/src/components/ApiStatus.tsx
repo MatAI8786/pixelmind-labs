@@ -1,12 +1,19 @@
 import { useEffect, useState } from 'react';
+import { Tooltip } from '@headlessui/react';
+import ProviderTestModal from './ProviderTestModal';
 
-interface HealthData {
-  [key: string]: string;
+interface HealthItem {
+  status: string;
+  msg: string;
 }
+
+type HealthData = Record<string, HealthItem>;
 
 export default function ApiStatus() {
   const [data, setData] = useState<HealthData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [log, setLog] = useState('');
+  const [open, setOpen] = useState(false);
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   useEffect(() => {
@@ -30,6 +37,17 @@ export default function ApiStatus() {
     fetchHealth();
   }, [baseUrl]);
 
+  const runTest = async (prov: string) => {
+    try {
+      const res = await fetch(`${baseUrl}/api/test/${prov}`);
+      const j = await res.json();
+      setLog(JSON.stringify(j, null, 2));
+    } catch (e: any) {
+      setLog(e.message);
+    }
+    setOpen(true);
+  };
+
   if (!data) {
     return (
       <div>
@@ -41,23 +59,26 @@ export default function ApiStatus() {
 
   return (
     <div>
+      <ProviderTestModal open={open} log={log} onClose={() => setOpen(false)} />
       <h3 className="font-bold mb-2">API Status</h3>
-      <ul className="space-y-1">
+      <div className="flex space-x-2">
         {Object.entries(data).map(([key, value]) => {
           const color =
-            value === 'ok'
-              ? 'bg-green-500'
-              : value === 'missing_key'
-              ? 'bg-yellow-500'
-              : 'bg-red-500';
+            value.status === 'ok'
+              ? 'bg-emerald-500'
+              : value.status === 'warning'
+              ? 'bg-amber-400'
+              : 'bg-rose-500';
           return (
-            <li key={key} className="flex items-center space-x-2">
-              <span className={`h-2 w-2 rounded-full ${color}`} />
-              <span>{key}</span>
-            </li>
+            <Tooltip key={key} content={value.msg}>
+              <span
+                onClick={() => runTest(key)}
+                className={`h-3 w-3 rounded-full ${color} cursor-pointer`}
+              />
+            </Tooltip>
           );
         })}
-      </ul>
+      </div>
     </div>
   );
 }

@@ -1,75 +1,32 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from datetime import datetime
-import openai
+from pathlib import Path
+import json
 
 router = APIRouter()
-
-# In-memory storage for API keys and their status
-api_keys: dict[str, dict] = {}
+SECRETS_DIR = Path(__file__).resolve().parent.parent / "secrets"
+SECRETS_DIR.mkdir(exist_ok=True)
 
 class KeyItem(BaseModel):
-    provider: str
     key: str
 
-class ProviderItem(BaseModel):
-    provider: str
-
-
-def _validate_openai(key: str) -> str:
-    try:
-        openai.api_key = key
-        openai.Model.list()
-        return "ok"
-    except Exception:
-        return "invalid"
-
-@router.post('/add')
-def add_key(item: KeyItem):
-    api_keys[item.provider] = {
-        "key": item.key,
-        "status": "unknown",
-        "last_checked": None,
-    }
-    return {"status": "added"}
-
-@router.post('/update')
-def update_key(item: KeyItem):
-    api_keys[item.provider] = {
-        "key": item.key,
-        "status": "unknown",
-        "last_checked": None,
-    }
-    return {"status": "updated"}
-
-@router.post('/delete')
-def delete_key(item: ProviderItem):
-    api_keys.pop(item.provider, None)
-    return {"status": "deleted"}
-
-@router.post('/validate')
-def validate_key(item: ProviderItem | KeyItem):
-    stored = api_keys.get(item.provider)
-    key = getattr(item, 'key', None) or (stored and stored.get('key'))
-    if not key:
-        return {"status": "missing"}
-    status = "unknown"
-    if item.provider.lower() == 'openai':
-        status = _validate_openai(key)
-    api_keys[item.provider] = {
-        "key": key,
-        "status": status,
-        "last_checked": datetime.utcnow().isoformat(),
-    }
-    return {"status": status}
+@router.post('/{provider}', status_code=201)
+def save_key(provider: str, item: KeyItem):
+    path = SECRETS_DIR / f"{provider}.json"
+    path.write_text(json.dumps({"key": item.key}))
+    return {"status": "saved"}
 
 @router.get('/list')
 def list_keys():
-    return [
-        {
-            "provider": p,
-            "status": v.get("status", "unknown"),
-            "last_checked": v.get("last_checked"),
-        }
-        for p, v in api_keys.items()
-    ]
+    result = []
+    for p in SECRETS_DIR.glob('*.json'):
+        data = json.loads(p.read_text())
+        result.append({"provider": p.stem, "has_key": bool(data.get('key'))})
+    return result
+
+@router.delete('/{provider}')
+def delete_key(provider: str):
+    path = SECRETS_DIR / f"{provider}.json"
+    if path.exists():
+        path.unlink()
+    return {"status": "deleted"}
