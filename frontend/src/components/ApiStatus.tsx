@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Tooltip } from '@headlessui/react';
+import * as Tooltip from '@radix-ui/react-tooltip';
 import ProviderTestModal from './ProviderTestModal';
 
 interface HealthItem {
@@ -61,24 +61,38 @@ export default function ApiStatus() {
     <div>
       <ProviderTestModal open={open} log={log} onClose={() => setOpen(false)} />
       <h3 className="font-bold mb-2">API Status</h3>
-      <div className="flex space-x-2">
-        {Object.entries(data).map(([key, value]) => {
-          const color =
-            value.status === 'ok'
-              ? 'bg-emerald-500'
-              : value.status === 'warning'
-              ? 'bg-amber-400'
-              : 'bg-rose-500';
-          return (
-            <Tooltip key={key} content={value.msg}>
-              <span
-                onClick={() => runTest(key)}
-                className={`h-3 w-3 rounded-full ${color} cursor-pointer`}
-              />
-            </Tooltip>
-          );
-        })}
-      </div>
+      <Tooltip.Provider delayDuration={100} skipDelayDuration={100}>
+        <div className="flex space-x-2">
+          {Object.entries(data).map(([key, value]) => {
+            const color =
+              value.status === 'ok'
+                ? 'bg-emerald-500'
+                : value.status === 'warning'
+                ? 'bg-amber-400'
+                : 'bg-rose-500';
+            return (
+              <Tooltip.Root key={key}>
+                <Tooltip.Trigger asChild>
+                  <span
+                    onClick={() => runTest(key)}
+                    className={`h-3 w-3 rounded-full ${color} cursor-pointer`}
+                  />
+                </Tooltip.Trigger>
+                <Tooltip.Portal>
+                  <Tooltip.Content
+                    side="top"
+                    sideOffset={4}
+                    className="bg-gray-900 text-white px-2 py-1 rounded text-xs"
+                  >
+                    {value.msg}
+                    <Tooltip.Arrow className="fill-gray-900" />
+                  </Tooltip.Content>
+                </Tooltip.Portal>
+              </Tooltip.Root>
+            );
+          })}
+        </div>
+      </Tooltip.Provider>
     </div>
   );
 }
