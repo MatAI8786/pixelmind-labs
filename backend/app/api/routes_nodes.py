@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+from pydantic import BaseModel
 import requests
 import openai
 import logging
@@ -9,6 +10,10 @@ colorama_init(autoreset=True)
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+class TestPayload(BaseModel):
+    key: str | None = None
 
 def check_openai(key: str) -> tuple[bool, str | None]:
     try:
@@ -29,14 +34,15 @@ def check_url(url: str, headers: dict[str, str] | None = None) -> tuple[bool, st
         return False, str(e)
 
 
-def log_and_response(status: str, provider: str, message: str):
+def log_and_response(status: str, provider: str, message: str, logs: list[str]):
     if status == "success":
         logger.info(Fore.GREEN + f"{provider}: {message}" + Style.RESET_ALL)
     elif status == "warning":
         logger.warning(Fore.YELLOW + f"{provider}: {message}" + Style.RESET_ALL)
     else:
         logger.error(Fore.RED + f"{provider}: {message}" + Style.RESET_ALL)
-    return {"status": status, "message": message}
+    logs.append(f"{provider}: {message}")
+    return {"status": status, "message": message, "logs": logs}
 
 
 def key_present(env_name: str, key: str | None):
@@ -45,58 +51,71 @@ def key_present(env_name: str, key: str | None):
     return False, f"missing {env_name}"
 
 
-@router.get('/test/{provider}')
-def test_node(provider: str):
-    """Check connectivity for the given provider using env settings."""
+@router.post('/test/{provider}')
+def test_node(provider: str, payload: TestPayload):
+    """Check connectivity for the given provider using env settings or provided key."""
     settings = get_settings()
     provider = provider.lower()
+    logs: list[str] = []
 
     if provider == 'openai':
-        key = settings.OPENAI_API_KEY
+        key = payload.key or settings.OPENAI_API_KEY
         ok, msg = key_present('OPENAI_API_KEY', key)
         if not ok:
-            return log_and_response("failed", provider, msg)
+            return log_and_response("failed", provider, msg, logs)
         ok, err = check_openai(key)
-        return log_and_response("success" if ok else "failed", provider, err or "ok")
+        return log_and_response("success" if ok else "failed", provider, err or "ok", logs)
 
     if provider == 'google':
-        ok, err = check_url('https://www.google.com')
-        return log_and_response("success" if ok else "failed", provider, err or "ok")
+        key = payload.key or settings.GOOGLE_API_KEY
+        if not key:
+            ok = False
+            err = "missing GOOGLE_API_KEY"
+        else:
+            ok, err = check_url('https://maps.googleapis.com/maps/api/geocode/json?address=London&key='+key)
+        return log_and_response("success" if ok else "failed", provider, err or "ok", logs)
 
     if provider == 'gemini':
-        ok, msg = key_present('GEMINI_API_KEY', settings.GEMINI_API_KEY)
-        return log_and_response("success" if ok else "failed", provider, msg)
+        key = payload.key or settings.GEMINI_API_KEY
+        ok, msg = key_present('GEMINI_API_KEY', key)
+        return log_and_response("success" if ok else "failed", provider, msg, logs)
 
     if provider == 'etherscan':
-        ok, msg = key_present('ETHERSCAN_API_KEY', settings.ETHERSCAN_API_KEY)
-        return log_and_response("success" if ok else "failed", provider, msg)
+        key = payload.key or settings.ETHERSCAN_API_KEY
+        ok, msg = key_present('ETHERSCAN_API_KEY', key)
+        return log_and_response("success" if ok else "failed", provider, msg, logs)
 
     if provider == 'tiktok':
-        ok, msg = key_present('TIKTOK_API_KEY', settings.TIKTOK_API_KEY)
-        return log_and_response("success" if ok else "failed", provider, msg)
+        key = payload.key or settings.TIKTOK_API_KEY
+        ok, msg = key_present('TIKTOK_API_KEY', key)
+        return log_and_response("success" if ok else "failed", provider, msg, logs)
 
     if provider == 'gmail':
-        ok, msg = key_present('GMAIL_API_KEY', settings.GMAIL_API_KEY)
-        return log_and_response("success" if ok else "failed", provider, msg)
+        key = payload.key or settings.GMAIL_API_KEY
+        ok, msg = key_present('GMAIL_API_KEY', key)
+        return log_and_response("success" if ok else "failed", provider, msg, logs)
 
     if provider == 'bscan':
-        ok, msg = key_present('BSCAN_API_KEY', settings.BSCAN_API_KEY)
-        return log_and_response("success" if ok else "failed", provider, msg)
+        key = payload.key or settings.BSCAN_API_KEY
+        ok, msg = key_present('BSCAN_API_KEY', key)
+        return log_and_response("success" if ok else "failed", provider, msg, logs)
 
     if provider == 'facebook':
-        ok, msg = key_present('FACEBOOK_API_KEY', settings.FACEBOOK_API_KEY)
-        return log_and_response("success" if ok else "failed", provider, msg)
+        key = payload.key or settings.FACEBOOK_API_KEY
+        ok, msg = key_present('FACEBOOK_API_KEY', key)
+        return log_and_response("success" if ok else "failed", provider, msg, logs)
 
     if provider == 'paypal':
-        ok, msg = key_present('PAYPAL_API_KEY', settings.PAYPAL_API_KEY)
-        return log_and_response("success" if ok else "failed", provider, msg)
+        key = payload.key or settings.PAYPAL_API_KEY
+        ok, msg = key_present('PAYPAL_API_KEY', key)
+        return log_and_response("success" if ok else "failed", provider, msg, logs)
 
     if provider == 'binance':
-        key = settings.BINANCE_API_KEY
+        key = payload.key or settings.BINANCE_API_KEY
         ok, msg = key_present('BINANCE_API_KEY', key)
         if not ok:
-            return log_and_response("failed", provider, msg)
+            return log_and_response("failed", provider, msg, logs)
         ok, err = check_url('https://api.binance.com/api/v3/ping', headers={"X-MBX-APIKEY": key})
-        return log_and_response("success" if ok else "failed", provider, err or "ok")
+        return log_and_response("success" if ok else "failed", provider, err or "ok", logs)
 
-    return log_and_response("failed", provider, "unsupported provider")
+    return log_and_response("failed", provider, "unsupported provider", logs)

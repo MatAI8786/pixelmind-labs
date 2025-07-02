@@ -71,11 +71,11 @@ be available at <http://localhost:3000> and the backend API at
 ### Single Command (Local)
 
 You can also run both servers locally without Docker. Install the root dev
-dependencies and launch the servers with:
+dependencies and launch **both the FastAPI and Next.js servers** with a single command:
 
 ```bash
 npm install
-npm run dev
+npm run dev  # starts frontend and backend together
 ```
 
 The `dev` script uses [concurrently](https://www.npmjs.com/package/concurrently)
@@ -138,3 +138,24 @@ serialized when exporting workflows.
 
 The UI defaults to a dark theme. You can modify Tailwind classes or the
 `_document.tsx` file if you wish to change this behavior.
+
+## Node Panels and Key Testing
+
+The **Settings → Nodes** section now lists providers such as Google, Gemini and
+Binance. Click a provider to open a dark themed panel where you can paste a
+credential, test it using the `/api/test/{provider}` POST endpoint and view the
+colored log output. Results are displayed in green for success, yellow for
+warnings and red for failures.
+
+## Connecting Nodes
+
+Every node on the canvas exposes input and output sockets. Drag from a node's
+output port onto another node's input port to create an edge. These edges are
+stored in your workflow JSON when exporting or saving.
+
+### Backend Key Test Endpoint
+
+`POST /api/test/{provider}` accepts a JSON body containing an optional `key`
+field. The backend loads credentials from your `.env` file when no key is
+supplied and performs a small API call to verify access. A structured response
+with status and logs is returned.
