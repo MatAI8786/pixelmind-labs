@@ -34,6 +34,7 @@ export default function NodeSettings() {
   };
 
   const testProvider = async (prov: string) => {
+    setStatuses((s) => ({ ...s, [prov]: 'pending' }));
     try {
       const res = await fetch(`${baseUrl}/api/test/${prov}`, {
         method: 'POST',
@@ -51,6 +52,7 @@ export default function NodeSettings() {
 
   const statusColor = (status: string | undefined) => {
     if (status === 'success') return 'text-green-400';
+    if (status === 'pending') return 'text-orange-400';
     if (status === 'warning') return 'text-yellow-400';
     return 'text-red-400';
   };
@@ -71,6 +73,8 @@ export default function NodeSettings() {
                 className={`ml-2 text-xs px-2 py-0.5 rounded ${
                   statuses[p] === 'success'
                     ? 'bg-green-600'
+                    : statuses[p] === 'pending'
+                    ? 'bg-orange-600'
                     : statuses[p] === 'warning'
                     ? 'bg-yellow-600'
                     : 'bg-red-600'
