@@ -52,6 +52,8 @@ function FlowBuilder() {
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [dragType, setDragType] = useState<string | null>(null);
   const { project } = useReactFlow();
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -108,6 +110,7 @@ function FlowBuilder() {
         data,
       };
       setNodes((nds) => [...nds, newNode]);
+      setSelectedNodeId(newNode.id);
     },
     [project, setNodes],
   );
@@ -363,41 +366,40 @@ function FlowBuilder() {
   return (
     <div className="flex h-screen">
         <aside className="w-48 bg-gray-100 dark:bg-gray-900 p-4 space-y-2 text-black dark:text-white">
-          <div
-            className="cursor-grab p-2 bg-white dark:bg-gray-700 border rounded text-center dark:border-gray-600 dark:text-white"
-            onDragStart={(e) => onDragStart(e, 'llm')}
-            draggable
+          <button
+            onClick={() => setAddOpen((o) => !o)}
+            className="w-full bg-blue-500 text-white px-2 py-1 rounded"
           >
-            + LLM
-          </div>
-          <div
-            className="cursor-grab p-2 bg-white dark:bg-gray-700 border rounded text-center dark:border-gray-600 dark:text-white"
-            onDragStart={(e) => onDragStart(e, 'input')}
-            draggable
-          >
-            + Input
-          </div>
-          <div
-            className="cursor-grab p-2 bg-white dark:bg-gray-700 border rounded text-center dark:border-gray-600 dark:text-white"
-            onDragStart={(e) => onDragStart(e, 'output')}
-            draggable
-          >
-            + Output
-          </div>
-          <div
-            className="cursor-grab p-2 bg-white dark:bg-gray-700 border rounded text-center dark:border-gray-600 dark:text-white"
-            onDragStart={(e) => onDragStart(e, 'tool')}
-            draggable
-          >
-            + Tool
-          </div>
-          <div
-            className="cursor-grab p-2 bg-white dark:bg-gray-700 border rounded text-center dark:border-gray-600 dark:text-white"
-            onDragStart={(e) => onDragStart(e, 'condition')}
-            draggable
-          >
-            + Condition
-          </div>
+            Add Node
+          </button>
+          {addOpen && (
+            <ul className="space-y-1">
+              {['llm', 'input', 'output', 'tool', 'condition'].map((t) => (
+                <li key={t}>
+                  <button
+                    onClick={() => {
+                      setDragType(t);
+                      setAddOpen(false);
+                    }}
+                    className="w-full text-left px-2 py-1 bg-white dark:bg-gray-700 border rounded dark:border-gray-600"
+                  >
+                    {t.charAt(0).toUpperCase() + t.slice(1)}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {dragType && (
+            <div
+              className="cursor-grab p-2 text-center bg-white dark:bg-gray-700 border rounded dark:border-gray-600"
+              draggable
+              onDragStart={(e) => onDragStart(e, dragType)}
+              onDragEnd={() => setDragType(null)}
+            >
+              <img src={`/icons/${dragType}.svg`} alt={dragType} className="mx-auto h-8 w-8 mb-1" />
+              Drag {dragType}
+            </div>
+          )}
           <button
             onClick={exportWorkflow}
             className="w-full bg-blue-500 text-white px-2 py-1 rounded"
