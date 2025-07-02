@@ -3,6 +3,7 @@ from pathlib import Path
 import json
 from uuid import uuid4
 from ..engine.runner import execute_workflow
+from .models import Workflow
 
 router = APIRouter()
 WORKFLOW_DIR = Path('workflows')
@@ -13,11 +14,11 @@ def run_workflow(graph: dict):
     return execute_workflow(graph)
 
 @router.post('')
-def create_workflow(graph: dict):
+def create_workflow(graph: Workflow):
     """Save a workflow graph and return its id."""
     wf_id = str(uuid4())
     path = WORKFLOW_DIR / f"{wf_id}.json"
-    path.write_text(json.dumps(graph, indent=2))
+    path.write_text(graph.model_dump_json(indent=2))
     return {"id": wf_id}
 
 @router.get('/{workflow_id}')
