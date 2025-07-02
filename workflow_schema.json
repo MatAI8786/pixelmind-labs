@@ -1,0 +1,23 @@
+{
+  "description": "Simple workflow schema shared with the frontend.",
+  "properties": {
+    "nodes": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Nodes",
+      "type": "array"
+    },
+    "edges": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Edges",
+      "type": "array"
+    }
+  },
+  "title": "Workflow",
+  "type": "object"
+}

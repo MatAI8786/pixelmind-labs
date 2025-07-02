@@ -7,3 +7,7 @@ requests
 pydantic-settings>=2.0.0
 colorama
 httpx
+pytest
+pytest-asyncio
+pytest-schema
+jsonschema

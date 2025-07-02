@@ -1,0 +1,50 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        job: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node
+        if: matrix.job == 'frontend'
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+      - name: Setup Python
+        if: matrix.job == 'backend'
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install frontend deps
+        if: matrix.job == 'frontend'
+        run: |
+          cd frontend
+          npm ci
+      - name: Frontend lint
+        if: matrix.job == 'frontend'
+        run: |
+          cd frontend
+          npm run lint
+      - name: Frontend unit tests
+        if: matrix.job == 'frontend'
+        run: |
+          cd frontend
+          npm run test
+      - name: Install Playwright
+        if: matrix.job == 'frontend'
+        run: npx playwright install --with-deps
+      - name: Frontend e2e tests
+        if: matrix.job == 'frontend'
+        run: |
+          cd frontend
+          npm run e2e
+      - name: Install backend deps
+        if: matrix.job == 'backend'
+        run: |
+          pip install -r backend/requirements.txt
+      - name: Backend tests
+        if: matrix.job == 'backend'
+        run: pytest

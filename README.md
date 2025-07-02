@@ -98,6 +98,24 @@ If you prefer to run the services without Docker:
    npm run dev
    ```
 
+## Running Tests
+
+Frontend unit tests and Playwright end-to-end tests can be run with:
+
+```bash
+cd frontend
+npm run lint
+npm run test
+npm run e2e
+```
+
+To execute the backend test suite:
+
+```bash
+pip install -r backend/requirements.txt
+pytest
+```
+
 ## Workflows
 
 Saved workflows are stored in the `workflows/` directory as JSON files. You can
