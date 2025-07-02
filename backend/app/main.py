@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import logging
+from colorama import init as colorama_init
 from .api import (
     routes_workflows,
     routes_keys,
@@ -7,6 +9,9 @@ from .api import (
     routes_llm,
     routes_nodes,
 )
+
+colorama_init(autoreset=True)
+logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(message)s")
 
 app = FastAPI(title="PixelMind Labs API")
 
