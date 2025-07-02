@@ -3,6 +3,7 @@ import Link from 'next/link';
 import ApiConnections from '../components/ApiConnections';
 import NodeSettings from '../components/NodeSettings';
 import ApiStatus from '../components/ApiStatus';
+import ThemeToggle from '../components/ThemeToggle';
 import { useState } from 'react';
 
 export default function Settings() {
@@ -14,8 +15,9 @@ export default function Settings() {
       </Head>
       <Link href="/" className="text-blue-500">&larr; Back</Link>
       <h1 className="text-xl font-bold mb-4">Settings</h1>
-      <div className="mb-4">
+      <div className="mb-4 space-y-2">
         <ApiStatus />
+        <ThemeToggle />
       </div>
       <div className="flex">
         <aside className="w-40 mr-4 space-y-2">

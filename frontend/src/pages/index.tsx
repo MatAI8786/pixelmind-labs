@@ -1,9 +1,10 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
 import Link from 'next/link';
 import download from 'downloadjs';
 import ApiStatus from '../components/ApiStatus';
+import ThemeToggle from '../components/ThemeToggle';
 import {
   useNodesState,
   useEdgesState,
@@ -53,6 +54,14 @@ function FlowBuilder() {
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const { project } = useReactFlow();
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+  useEffect(() => {
+    const handle = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSelectedNodeId(null);
+    };
+    window.addEventListener('keydown', handle);
+    return () => window.removeEventListener('keydown', handle);
+  }, []);
 
   const onConnect = useCallback((params: Connection) =>
     setEdges((eds) => addEdge(params, eds)),
@@ -188,15 +197,30 @@ function FlowBuilder() {
 
   const renderConfigPanel = () => {
     if (!selectedNode) return null;
-    if (selectedNode.type === 'llm') {
-      return (
-        <aside className="absolute right-0 top-0 w-72 h-full bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-600 p-4 overflow-y-auto text-black dark:text-white">
+    const panelBase = (
+      content: JSX.Element,
+    ) => (
+      <div
+        className="fixed inset-0 z-20"
+        onClick={() => setSelectedNodeId(null)}
+      >
+        <div
+          className="absolute right-0 top-0 h-full w-72 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-600 p-4 overflow-y-auto text-black dark:text-white"
+          onClick={(e) => e.stopPropagation()}
+        >
           <button
             className="absolute top-1 right-1 text-xl text-gray-500"
             onClick={() => setSelectedNodeId(null)}
           >
             &times;
           </button>
+          {content}
+        </div>
+      </div>
+    );
+    if (selectedNode.type === 'llm') {
+      return panelBase(
+        <>
           <h2 className="font-bold mb-2">LLM Node</h2>
           <label className="block text-sm">Title</label>
           <input
@@ -254,19 +278,13 @@ function FlowBuilder() {
             Test Node
           </button>
           {testResult && <pre className="whitespace-pre-wrap text-xs border p-2">{testResult}</pre>}
-        </aside>
+        </>
       );
     }
     if (selectedNode.type === 'input') {
       const data = selectedNode.data as InputNodeData;
-      return (
-        <aside className="absolute right-0 top-0 w-72 h-full bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-600 p-4 overflow-y-auto text-black dark:text-white">
-          <button
-            className="absolute top-1 right-1 text-xl text-gray-500"
-            onClick={() => setSelectedNodeId(null)}
-          >
-            &times;
-          </button>
+      return panelBase(
+        <>
           <h2 className="font-bold mb-2">Input Node</h2>
           <label className="block text-sm">Title</label>
           <input
@@ -281,19 +299,13 @@ function FlowBuilder() {
             value={data.value}
             onChange={(e) => updateNodeData(selectedNode.id, { value: e.target.value })}
           />
-        </aside>
+        </>
       );
     }
     if (selectedNode.type === 'output') {
       const data = selectedNode.data as OutputNodeData;
-      return (
-        <aside className="absolute right-0 top-0 w-72 h-full bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-600 p-4 overflow-y-auto text-black dark:text-white">
-          <button
-            className="absolute top-1 right-1 text-xl text-gray-500"
-            onClick={() => setSelectedNodeId(null)}
-          >
-            &times;
-          </button>
+      return panelBase(
+        <>
           <h2 className="font-bold mb-2">Output Node</h2>
           <label className="block text-sm">Title</label>
           <input
@@ -301,19 +313,13 @@ function FlowBuilder() {
             value={data.title}
             onChange={(e) => updateNodeData(selectedNode.id, { title: e.target.value })}
           />
-        </aside>
+        </>
       );
     }
     if (selectedNode.type === 'tool') {
       const data = selectedNode.data as ToolNodeData;
-      return (
-        <aside className="absolute right-0 top-0 w-72 h-full bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-600 p-4 overflow-y-auto text-black dark:text-white">
-          <button
-            className="absolute top-1 right-1 text-xl text-gray-500"
-            onClick={() => setSelectedNodeId(null)}
-          >
-            &times;
-          </button>
+      return panelBase(
+        <>
           <h2 className="font-bold mb-2">Tool Node</h2>
           <label className="block text-sm">Title</label>
           <input
@@ -327,19 +333,13 @@ function FlowBuilder() {
             value={data.tool}
             onChange={(e) => updateNodeData(selectedNode.id, { tool: e.target.value })}
           />
-        </aside>
+        </>
       );
     }
     if (selectedNode.type === 'condition') {
       const data = selectedNode.data as ConditionNodeData;
-      return (
-        <aside className="absolute right-0 top-0 w-72 h-full bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-600 p-4 overflow-y-auto text-black dark:text-white">
-          <button
-            className="absolute top-1 right-1 text-xl text-gray-500"
-            onClick={() => setSelectedNodeId(null)}
-          >
-            &times;
-          </button>
+      return panelBase(
+        <>
           <h2 className="font-bold mb-2">Condition Node</h2>
           <label className="block text-sm">Title</label>
           <input
@@ -354,7 +354,7 @@ function FlowBuilder() {
             value={data.expression}
             onChange={(e) => updateNodeData(selectedNode.id, { expression: e.target.value })}
           />
-        </aside>
+        </>
       );
     }
     return null;
@@ -428,6 +428,7 @@ function FlowBuilder() {
           <Link href="/settings" className="block bg-white dark:bg-gray-700 border rounded text-center px-2 py-1 dark:border-gray-600 dark:text-white">
             Settings
           </Link>
+          <ThemeToggle />
           <ApiStatus />
         </aside>
         <main className="flex-1 relative dark:bg-gray-900" ref={reactFlowWrapper}>

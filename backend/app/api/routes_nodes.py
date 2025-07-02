@@ -78,37 +78,64 @@ def test_node(provider: str, payload: TestPayload):
     if provider == 'gemini':
         key = payload.key or settings.GEMINI_API_KEY
         ok, msg = key_present('GEMINI_API_KEY', key)
-        return log_and_response("success" if ok else "failed", provider, msg, logs)
+        if not ok:
+            return log_and_response("failed", provider, msg, logs)
+        ok, err = check_url(
+            f"https://generativelanguage.googleapis.com/v1beta/models?key={key}"
+        )
+        return log_and_response("success" if ok else "failed", provider, err or "ok", logs)
 
     if provider == 'etherscan':
         key = payload.key or settings.ETHERSCAN_API_KEY
         ok, msg = key_present('ETHERSCAN_API_KEY', key)
-        return log_and_response("success" if ok else "failed", provider, msg, logs)
+        if not ok:
+            return log_and_response("failed", provider, msg, logs)
+        ok, err = check_url(
+            f"https://api.etherscan.io/api?module=stats&action=ethprice&apikey={key}"
+        )
+        return log_and_response("success" if ok else "failed", provider, err or "ok", logs)
 
     if provider == 'tiktok':
         key = payload.key or settings.TIKTOK_API_KEY
         ok, msg = key_present('TIKTOK_API_KEY', key)
-        return log_and_response("success" if ok else "failed", provider, msg, logs)
+        if not ok:
+            return log_and_response("failed", provider, msg, logs)
+        ok, err = check_url('https://open.tiktokapis.com/v2', headers={"Authorization": f"Bearer {key}"})
+        return log_and_response("success" if ok else "failed", provider, err or "ok", logs)
 
     if provider == 'gmail':
         key = payload.key or settings.GMAIL_API_KEY
         ok, msg = key_present('GMAIL_API_KEY', key)
-        return log_and_response("success" if ok else "failed", provider, msg, logs)
+        if not ok:
+            return log_and_response("failed", provider, msg, logs)
+        ok, err = check_url('https://gmail.googleapis.com', headers={"Authorization": f"Bearer {key}"})
+        return log_and_response("success" if ok else "failed", provider, err or "ok", logs)
 
     if provider == 'bscan':
         key = payload.key or settings.BSCAN_API_KEY
         ok, msg = key_present('BSCAN_API_KEY', key)
-        return log_and_response("success" if ok else "failed", provider, msg, logs)
+        if not ok:
+            return log_and_response("failed", provider, msg, logs)
+        ok, err = check_url(
+            f"https://api.bscscan.com/api?module=stats&action=bnbprice&apikey={key}"
+        )
+        return log_and_response("success" if ok else "failed", provider, err or "ok", logs)
 
     if provider == 'facebook':
         key = payload.key or settings.FACEBOOK_API_KEY
         ok, msg = key_present('FACEBOOK_API_KEY', key)
-        return log_and_response("success" if ok else "failed", provider, msg, logs)
+        if not ok:
+            return log_and_response("failed", provider, msg, logs)
+        ok, err = check_url('https://graph.facebook.com', headers={"Authorization": f"Bearer {key}"})
+        return log_and_response("success" if ok else "failed", provider, err or "ok", logs)
 
     if provider == 'paypal':
         key = payload.key or settings.PAYPAL_API_KEY
         ok, msg = key_present('PAYPAL_API_KEY', key)
-        return log_and_response("success" if ok else "failed", provider, msg, logs)
+        if not ok:
+            return log_and_response("failed", provider, msg, logs)
+        ok, err = check_url('https://api.paypal.com', headers={"Authorization": f"Bearer {key}"})
+        return log_and_response("success" if ok else "failed", provider, err or "ok", logs)
 
     if provider == 'binance':
         key = payload.key or settings.BINANCE_API_KEY
