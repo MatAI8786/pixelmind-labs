@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     OPENAI_ORG_ID: str | None = None
     ANTHROPIC_API_KEY: str | None = None
     MISTRAL_API_KEY: str | None = None
+    GOOGLE_API_KEY: str | None = None
     GEMINI_API_KEY: str | None = None
     ETHERSCAN_API_KEY: str | None = None
     TIKTOK_API_KEY: str | None = None
