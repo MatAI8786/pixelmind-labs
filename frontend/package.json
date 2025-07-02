@@ -14,7 +14,8 @@
     "react-dom": "18.2.0",
     "reactflow": "^11.11.4",
     "zustand": "4.4.1",
-    "@headlessui/react": "^1.7.20"
+    "@headlessui/react": "^1.7.19",
+    "@radix-ui/react-tooltip": "^1.2.7"
   },
   "devDependencies": {
     "@types/node": "24.0.8",
