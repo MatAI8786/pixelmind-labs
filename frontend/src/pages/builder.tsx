@@ -12,7 +12,7 @@ import ReactFlow, {
   Edge,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { v4 as uuidv4 } from 'uuid';
+import { dragNodeFactory } from '../lib/dragNodeFactory';
 import TriggerNode from '../components/nodes/TriggerNode';
 import ActionNode from '../components/nodes/ActionNode';
 import ConditionNode from '../components/nodes/ConditionNode';
@@ -69,13 +69,8 @@ function BuilderInner() {
       const type = event.dataTransfer.getData('application/reactflow');
       if (!reactFlowWrapper.current || !type) return;
       const bounds = reactFlowWrapper.current.getBoundingClientRect();
-      const position = project({ x: event.clientX - bounds.left, y: event.clientY - bounds.top });
-      const newNode: Node = {
-        id: uuidv4(),
-        type,
-        position,
-        data: { label: type.charAt(0).toUpperCase() + type.slice(1) },
-      };
+      const pos = project({ x: event.clientX - bounds.left, y: event.clientY - bounds.top });
+      const newNode = dragNodeFactory(type, pos.x, pos.y);
       setNodes((nds) => nds.concat(newNode));
     },
     [project, setNodes],

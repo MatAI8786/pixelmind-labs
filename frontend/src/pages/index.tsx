@@ -19,6 +19,7 @@ import {
   ReactFlowProvider,
 } from 'reactflow';
 import { WorkflowProvider } from '../state/workflowContext';
+import { dragNodeFactory } from '../lib/dragNodeFactory';
 import LLMNode, { LLMNodeData } from '../components/nodes/LLMNode';
 import InputNode, { InputNodeData } from '../components/nodes/InputNode';
 import OutputNode, { OutputNodeData } from '../components/nodes/OutputNode';
@@ -91,32 +92,8 @@ function FlowBuilder() {
   );
 
   const createNode = (type: string, x: number, y: number) => {
-    const position = project({ x, y });
-    let data: any = {};
-    if (type === 'llm') {
-      data = {
-        title: 'LLM',
-        prompt: '',
-        model: 'gpt-3.5-turbo',
-        temperature: 1,
-        maxTokens: 256,
-        provider: 'openai',
-      };
-    } else if (type === 'input') {
-      data = { title: 'Input', value: '' };
-    } else if (type === 'output') {
-      data = { title: 'Output' };
-    } else if (type === 'tool') {
-      data = { title: 'Tool', tool: '' };
-    } else if (type === 'condition') {
-      data = { title: 'Condition', expression: '' };
-    }
-    const newNode: Node<CustomNodeData> = {
-      id: crypto.randomUUID(),
-      type,
-      position,
-      data,
-    };
+    const { x: px, y: py } = project({ x, y });
+    const newNode = dragNodeFactory(type, px, py) as Node<CustomNodeData>;
     setNodes((nds) => [...nds, newNode]);
     setSelectedNodeId(newNode.id);
   };
@@ -395,14 +372,13 @@ function FlowBuilder() {
             <h4 className="font-semibold mb-1">Nodes</h4>
             <ul className="space-y-1">
               {nodeTypesList.map((t) => (
-                <li key={t}>
-                  <div
+                <li key={t} className="flex items-center space-x-1">
+                  <span
+                    className="w-3 h-3 bg-gray-400 rounded cursor-grab"
                     draggable
                     onDragStart={(e) => onDragStart(e, t)}
-                    className="cursor-grab px-2 py-1 bg-white dark:bg-gray-700 border rounded dark:border-gray-600"
-                  >
-                    {t.charAt(0).toUpperCase() + t.slice(1)}
-                  </div>
+                  />
+                  <span>{t.charAt(0).toUpperCase() + t.slice(1)}</span>
                 </li>
               ))}
             </ul>

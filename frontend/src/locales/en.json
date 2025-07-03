@@ -1,0 +1,10 @@
+{
+  "provider": "Provider",
+  "status": "Status",
+  "lastChecked": "Last Checked",
+  "lastError": "Last Error",
+  "actions": "Actions",
+  "test": "Test",
+  "copyLog": "Copy log",
+  "providers": "Providers"
+}

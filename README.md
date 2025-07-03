@@ -129,10 +129,10 @@ To create new nodes for the editor, add React components under
 
 ## API Health Check
 
-Open the **Settings → API Connections** page to view live status indicators for
-each configured API provider. The backend `/api/health` endpoint tests
-connectivity for services like OpenAI, Anthropic and others based on the keys in
-your `.env` file.
+Visit **Settings** to see a table of providers returned from `/api/providers`.
+Each row shows a green ✓ or red ✗ status, the last check timestamp and the last
+error message. Use the **Test** action to call `/api/providers/&lt;id&gt;/test` and
+view the JSON response in a modal where you can copy the log.
 
 ## Testing LLM Nodes
 
@@ -159,11 +159,10 @@ The UI defaults to a dark theme. You can modify Tailwind classes or the
 
 ## Node Panels and Key Testing
 
-The **Settings → Nodes** section now lists providers such as Google, Gemini and
-Binance. Click a provider to open a dark themed panel where you can paste a
-credential, test it using the `/api/test/{provider}` POST endpoint and view the
-colored log output. Results are displayed in green for success, yellow for
-warnings and red for failures.
+The **Settings** page displays all built-in providers such as Google, Gemini and
+Binance. Use the **Test** button on any row to hit `/api/providers/{id}/test` and
+inspect the JSON output. Results appear in a modal with a convenient **Copy log**
+button.
 
 ## Connecting Nodes
 
