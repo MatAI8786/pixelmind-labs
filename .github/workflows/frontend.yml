@@ -18,9 +18,7 @@ jobs:
           restore-keys: ${{ runner.os }}-playwright-
       - name: Install deps
         working-directory: frontend
-        run: npm ci
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
+        run: npm ci && npm run postinstall
       - name: Lint
         working-directory: frontend
         run: npm run lint:ci

@@ -3,22 +3,23 @@ import NodeRow from '../src/components/NodeRow';
 
 const item = {
   provider: 'openai',
-  has_key: true,
-  health: 'ok',
+  status: 'ok',
   last_error: null,
-  checked_at: 'now',
+  last_checked: 'now',
 };
 
 test('renders provider row with LED and button', () => {
   render(
     <table>
       <tbody>
-        <NodeRow item={item} onClick={() => {}} />
+        <NodeRow item={item} onClick={() => {}} onRetest={() => {}} />
       </tbody>
     </table>,
   );
-  expect(screen.getByText('openai')).toBeInTheDocument();
+  const cells = screen.getAllByRole('cell');
+  expect(cells[0]).toHaveTextContent('openai');
   expect(screen.getByRole('button', { name: /view/i })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /retest/i })).toBeInTheDocument();
   const row = screen.getByTestId('node-row');
   expect(row.querySelector('span')).toBeTruthy();
 });

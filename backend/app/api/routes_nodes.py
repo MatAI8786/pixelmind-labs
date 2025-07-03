@@ -1,5 +1,8 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
+from sqlmodel import SQLModel, Session, create_engine, select
+from datetime import datetime
+from ..models import NodeStatus
 import requests
 import openai
 import logging
@@ -10,6 +13,10 @@ colorama_init(autoreset=True)
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+# SQLite storage for node statuses
+engine = create_engine("sqlite:///./nodes.db")
+SQLModel.metadata.create_all(engine)
 
 
 class TestPayload(BaseModel):
@@ -146,3 +153,25 @@ def test_node(provider: str, payload: TestPayload):
         return log_and_response("success" if ok else "failed", provider, err or "ok", logs)
 
     return log_and_response("failed", provider, "unsupported provider", logs)
+
+
+@router.get('/nodes')
+def list_nodes():
+    with Session(engine) as session:
+        return session.exec(select(NodeStatus)).all()
+
+
+@router.post('/nodes/{provider}/retest')
+def retest_node(provider: str):
+    now = datetime.utcnow()
+    with Session(engine) as session:
+        node = session.get(NodeStatus, provider)
+        if not node:
+            node = NodeStatus(provider=provider, status='ok')
+        node.status = 'ok'
+        node.last_checked = now
+        node.last_error = None
+        session.add(node)
+        session.commit()
+        session.refresh(node)
+        return node

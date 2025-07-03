@@ -5,6 +5,7 @@ import Link from 'next/link';
 import download from 'downloadjs';
 import ApiStatus from '../components/ApiStatus';
 import ThemeToggle from '../components/ThemeToggle';
+import toast from 'react-hot-toast';
 import {
   useNodesState,
   useEdgesState,
@@ -51,11 +52,25 @@ function FlowBuilder() {
   const [nodes, setNodes, onNodesChange] = useNodesState<CustomNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
-  const [dragType, setDragType] = useState<string | null>(null);
   const { project } = useReactFlow();
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const wid = params.get('wid');
+    if (wid) {
+      fetch(`${baseUrl}/api/workflows/${wid}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (d) {
+            setNodes(d.nodes || []);
+            setEdges(d.edges || []);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [baseUrl]);
 
   useEffect(() => {
     const handle = (e: KeyboardEvent) => {
@@ -71,56 +86,41 @@ function FlowBuilder() {
     [setEdges],
   );
 
-  const onDragStart = (event: React.DragEvent, type: string) => {
-    event.dataTransfer.setData('application/reactflow', type);
-    event.dataTransfer.effectAllowed = 'move';
-  };
-
-  const onDrop = useCallback(
-    (event: React.DragEvent) => {
-      event.preventDefault();
-      const type = event.dataTransfer.getData('application/reactflow');
-      if (!reactFlowWrapper.current || !type) return;
-      const bounds = reactFlowWrapper.current.getBoundingClientRect();
-      const position = project({
-        x: event.clientX - bounds.left,
-        y: event.clientY - bounds.top,
-      });
-      let data: any = {};
-      if (type === 'llm') {
-        data = {
-          title: 'LLM',
-          prompt: '',
-          model: 'gpt-3.5-turbo',
-          temperature: 1,
-          maxTokens: 256,
-          provider: 'openai',
-        };
-      } else if (type === 'input') {
-        data = { title: 'Input', value: '' };
-      } else if (type === 'output') {
-        data = { title: 'Output' };
-      } else if (type === 'tool') {
-        data = { title: 'Tool', tool: '' };
-      } else if (type === 'condition') {
-        data = { title: 'Condition', expression: '' };
-      }
-      const newNode: Node<CustomNodeData> = {
-        id: crypto.randomUUID(),
-        type,
-        position,
-        data,
+  const addNode = (type: string, e: React.MouseEvent) => {
+    if (!reactFlowWrapper.current) return;
+    const bounds = reactFlowWrapper.current.getBoundingClientRect();
+    const position = project({
+      x: e.clientX - bounds.left,
+      y: e.clientY - bounds.top,
+    });
+    let data: any = {};
+    if (type === 'llm') {
+      data = {
+        title: 'LLM',
+        prompt: '',
+        model: 'gpt-3.5-turbo',
+        temperature: 1,
+        maxTokens: 256,
+        provider: 'openai',
       };
-      setNodes((nds) => [...nds, newNode]);
-      setSelectedNodeId(newNode.id);
-    },
-    [project, setNodes],
-  );
-
-  const onDragOver = useCallback((event: React.DragEvent) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-  }, []);
+    } else if (type === 'input') {
+      data = { title: 'Input', value: '' };
+    } else if (type === 'output') {
+      data = { title: 'Output' };
+    } else if (type === 'tool') {
+      data = { title: 'Tool', tool: '' };
+    } else if (type === 'condition') {
+      data = { title: 'Condition', expression: '' };
+    }
+    const newNode: Node<CustomNodeData> = {
+      id: crypto.randomUUID(),
+      type,
+      position,
+      data,
+    };
+    setNodes((nds) => [...nds, newNode]);
+    setSelectedNodeId(newNode.id);
+  };
 
   const onNodeClick = useCallback((_e: any, node: Node) => {
     setSelectedNodeId(node.id);
@@ -167,15 +167,15 @@ function FlowBuilder() {
       const res = await fetch(`${baseUrl}/api/workflows/save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, graph: { nodes, edges } }),
+        body: JSON.stringify({ name, nodes, edges }),
       });
       if (!res.ok) {
         const text = await res.text();
         throw new Error(text || res.statusText);
       }
-      setSaveMessage('Saved');
+      toast.success('Saved');
     } catch (e: any) {
-      setSaveMessage(`Error: ${e.message}`);
+      toast.error(e.message);
     }
   };
 
@@ -379,8 +379,8 @@ function FlowBuilder() {
               {['llm', 'input', 'output', 'tool', 'condition'].map((t) => (
                 <li key={t}>
                   <button
-                    onClick={() => {
-                      setDragType(t);
+                    onClick={(e) => {
+                      addNode(t, e);
                       setAddOpen(false);
                     }}
                     className="w-full text-left px-2 py-1 bg-white dark:bg-gray-700 border rounded dark:border-gray-600"
@@ -390,18 +390,6 @@ function FlowBuilder() {
                 </li>
               ))}
             </ul>
-          )}
-          {dragType && (
-            <div
-              className="cursor-grab p-2 text-center bg-white dark:bg-gray-700 border rounded dark:border-gray-600"
-              draggable
-              onDragStart={(e) => onDragStart(e, dragType)}
-              onDragEnd={() => setDragType(null)}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`/icons/${dragType}.svg`} alt={dragType} className="mx-auto h-8 w-8 mb-1" />
-              Drag {dragType}
-            </div>
           )}
           <button
             onClick={exportWorkflow}
@@ -425,11 +413,6 @@ function FlowBuilder() {
           >
             Save Workflow
           </button>
-          {saveMessage && (
-            <div className="text-sm whitespace-pre-wrap mt-1 text-black dark:text-white">
-              {saveMessage}
-            </div>
-          )}
           <Link href="/settings" className="block bg-white dark:bg-gray-700 border rounded text-center px-2 py-1 dark:border-gray-600 dark:text-white">
             Settings
           </Link>
@@ -445,8 +428,6 @@ function FlowBuilder() {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
-            onDrop={onDrop}
-            onDragOver={onDragOver}
             onNodeClick={onNodeClick}
             className="h-full"
           />

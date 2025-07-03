@@ -1,34 +1,25 @@
-import { useEffect, useState } from 'react';
+import useSWR from 'swr';
+import { useState } from 'react';
 import ProviderTestModal from './ProviderTestModal';
 import NodeRow from './NodeRow';
 
 interface NodeInfo {
   provider: string;
-  has_key: boolean;
-  health?: string | null;
+  status: string;
+  last_checked?: string | null;
   last_error?: string | null;
-  checked_at?: string | null;
 }
 
 export default function NodeSettings() {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-  const [rows, setRows] = useState<NodeInfo[]>([]);
+  const fetcher = (url: string) => fetch(url).then((r) => r.json());
+  const { data: rows = [], mutate } = useSWR<NodeInfo[]>(`${baseUrl}/api/nodes`, fetcher);
   const [selected, setSelected] = useState<NodeInfo | null>(null);
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await fetch(`${baseUrl}/api/keys/list`);
-        if (res.ok) {
-          const data = await res.json();
-          setRows(data);
-        }
-      } catch (e) {
-        /* empty */
-      }
-    };
-    load();
-  }, [baseUrl]);
+  const retest = async (provider: string) => {
+    await fetch(`${baseUrl}/api/nodes/${provider}/retest`, { method: 'POST' });
+    mutate();
+  };
 
   return (
     <div>
@@ -43,9 +34,14 @@ export default function NodeSettings() {
             <th className="p-2 border">Actions</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="overflow-y-auto max-h-80 block">
           {rows.map((r) => (
-            <NodeRow key={r.provider} item={r} onClick={() => setSelected(r)} />
+            <NodeRow
+              key={r.provider}
+              item={r}
+              onRetest={() => retest(r.provider)}
+              onClick={() => setSelected(r)}
+            />
           ))}
         </tbody>
       </table>

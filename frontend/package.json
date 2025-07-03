@@ -8,8 +8,8 @@
     "lint": "next lint",
     "lint:ci": "next lint --max-warnings=0",
     "test": "jest",
-    "e2e": "run-p dev:start e2e:test",
-    "dev:start": "next dev --port 3000 & wait-on http://localhost:3000",
+    "e2e": "npm-run-all -p dev:start e2e:test",
+    "dev:start": "next dev",
     "e2e:test": "playwright test --project=chromium",
     "postinstall": "playwright install --with-deps"
   },
@@ -24,7 +24,9 @@
     "reactflow": "^11.11.4",
     "react-flow-renderer": "^10.3.17",
     "zustand": "4.4.1",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "swr": "^2.2.0",
+    "react-hot-toast": "^2.4.0"
   },
   "devDependencies": {
     "@types/node": "24.0.8",
@@ -45,6 +47,6 @@
     "tailwindcss": "3.3.5",
     "typescript": "5.2.2",
     "@types/uuid": "^9.0.2",
-    "playwright": "^1.41.2"
+    "playwright": "^1.46.0"
   }
 }
