@@ -9,6 +9,8 @@ venv/
 # Node
 node_modules/
 .next/
+frontend/test-results/
+workflows.db
 
 # VS Code
 .vscode/

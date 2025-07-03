@@ -21,7 +21,13 @@ def list_keys():
     result = []
     for p in SECRETS_DIR.glob('*.json'):
         data = json.loads(p.read_text())
-        result.append({"provider": p.stem, "has_key": bool(data.get('key'))})
+        result.append({
+            "provider": p.stem,
+            "has_key": bool(data.get("key")),
+            "health": data.get("health"),
+            "last_error": data.get("last_error"),
+            "checked_at": data.get("checked_at"),
+        })
     return result
 
 @router.delete('/{provider}')

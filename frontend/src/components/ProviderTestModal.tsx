@@ -23,7 +23,7 @@ export default function ProviderTestModal({ open, log, onClose }: ProviderTestMo
 {log}
         </pre>
         <div className="text-right mt-2">
-          <button onClick={copyLog} className="bg-blue-600 text-white px-2 py-1 rounded text-sm">Copy Log</button>
+          <button onClick={copyLog} className="bg-blue-600 text-white px-2 py-1 rounded text-sm">Copy JSON</button>
         </div>
       </Dialog.Panel>
     </Dialog>
