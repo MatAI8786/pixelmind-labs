@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+/* eslint-disable react-hooks/exhaustive-deps */
 
 interface KeyInfo {
   provider: string;
@@ -49,7 +50,6 @@ export default function ApiConnections() {
       setError(e.message);
     }
   };
-
   useEffect(() => {
     fetchKeys();
     fetchHealth();

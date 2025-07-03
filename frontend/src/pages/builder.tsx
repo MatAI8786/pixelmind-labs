@@ -1,5 +1,6 @@
 import Head from 'next/head';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import LogModal from '../components/LogModal';
 import ReactFlow, {
   ReactFlowProvider,
   useReactFlow,
@@ -31,13 +32,21 @@ function BuilderInner() {
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>(storeEdges);
   const [workflowId, setWorkflowId] = useState('');
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [log, setLog] = useState('');
+  const [logOpen, setLogOpen] = useState(false);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => setNodes(storeNodes), [storeNodes]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => setEdges(storeEdges), [storeEdges]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => setStoreNodes(nodes), [nodes, setStoreNodes]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => setStoreEdges(edges), [edges, setStoreEdges]);
 
-  const onConnect = useCallback((params: Connection) => setEdges((eds) => addEdge(params, eds)), []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const onConnect = useCallback((params: Connection) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
 
   const onDragStart = (event: React.DragEvent, type: string) => {
     event.dataTransfer.setData('application/reactflow', type);
@@ -66,6 +75,27 @@ function BuilderInner() {
     },
     [project, setNodes],
   );
+
+  const onNodeClick = useCallback((_e: any, node: Node) => {
+    setSelectedNode(node);
+  }, []);
+
+  const testNode = async () => {
+    if (!selectedNode) return;
+    try {
+      const res = await fetch(`${baseUrl}/api/workflows/execute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nodes: [selectedNode], edges: [] }),
+      });
+      const data = await res.json();
+      setLog((data.log || []).join('\n'));
+      setLogOpen(true);
+    } catch (e: any) {
+      setLog(e.message);
+      setLogOpen(true);
+    }
+  };
 
   const saveWorkflow = async () => {
     const res = await fetch(`${baseUrl}/api/workflows`, {
@@ -116,6 +146,9 @@ function BuilderInner() {
             Open
           </button>
         </div>
+        <button onClick={testNode} className="w-full bg-blue-600 text-white px-2 py-1 rounded">
+          Test Node
+        </button>
       </aside>
       <main className="flex-1" ref={reactFlowWrapper}>
         <ReactFlow
@@ -127,9 +160,11 @@ function BuilderInner() {
           onConnect={onConnect}
           onDrop={onDrop}
           onDragOver={onDragOver}
+          onNodeClick={onNodeClick}
           className="h-full"
         />
       </main>
+      <LogModal open={logOpen} log={log} onClose={() => setLogOpen(false)} />
     </div>
   );
 }

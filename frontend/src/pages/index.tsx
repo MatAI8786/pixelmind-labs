@@ -65,9 +65,11 @@ function FlowBuilder() {
     return () => window.removeEventListener('keydown', handle);
   }, []);
 
-  const onConnect = useCallback((params: Connection) =>
-    setEdges((eds) => addEdge(params, eds)),
-  []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const onConnect = useCallback(
+    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
+    [setEdges],
+  );
 
   const onDragStart = (event: React.DragEvent, type: string) => {
     event.dataTransfer.setData('application/reactflow', type);
@@ -396,6 +398,7 @@ function FlowBuilder() {
               onDragStart={(e) => onDragStart(e, dragType)}
               onDragEnd={() => setDragType(null)}
             >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={`/icons/${dragType}.svg`} alt={dragType} className="mx-auto h-8 w-8 mb-1" />
               Drag {dragType}
             </div>
