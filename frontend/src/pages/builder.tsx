@@ -18,6 +18,8 @@ import ActionNode from '../components/nodes/ActionNode';
 import ConditionNode from '../components/nodes/ConditionNode';
 import { useWorkflowStore } from '../state/workflowStore';
 import toast from 'react-hot-toast';
+import { useWorkflowList } from '../hooks/useWorkflowList';
+import { useWorkflowListStore } from '../state/workflowListStore';
 
 const nodeTypes = {
   trigger: TriggerNode,
@@ -36,6 +38,8 @@ function BuilderInner() {
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [log, setLog] = useState('');
   const [logOpen, setLogOpen] = useState(false);
+  const { workflows } = useWorkflowList();
+  const { add } = useWorkflowListStore();
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => setNodes(storeNodes), [storeNodes]);
@@ -99,11 +103,13 @@ function BuilderInner() {
   };
 
   const saveWorkflow = async () => {
+    const name = prompt('Workflow name');
+    if (!name) return;
     try {
-      const res = await fetch(`${baseUrl}/api/workflows`, {
+      const res = await fetch(`${baseUrl}/api/workflows/save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nodes, edges }),
+        body: JSON.stringify({ name, nodes, edges }),
       });
       if (!res.ok) {
         const text = await res.text();
@@ -111,6 +117,7 @@ function BuilderInner() {
       }
       const data = await res.json();
       setWorkflowId(data.id);
+      add({ id: data.id, name });
       toast.success('Workflow saved \u2714');
     } catch (err: any) {
       console.error(err);
@@ -152,15 +159,21 @@ function BuilderInner() {
         <button onClick={saveWorkflow} className="w-full bg-blue-600 text-white px-2 py-1 rounded">
           Save
         </button>
-        <div className="flex space-x-1">
-          <input
+        <div className="space-y-1">
+          <select
             value={workflowId}
             onChange={(e) => setWorkflowId(e.target.value)}
-            className="flex-1 px-1 text-black"
-            placeholder="id"
-          />
-          <button onClick={openWorkflow} className="bg-blue-600 text-white px-2 rounded">
-            Open
+            className="w-full px-1 text-black"
+          >
+            <option value="">Select workflow</option>
+            {workflows.map((w) => (
+              <option key={w.id} value={w.id}>
+                {w.name || `Workflow ${w.id}`}
+              </option>
+            ))}
+          </select>
+          <button onClick={openWorkflow} className="w-full bg-blue-600 text-white px-2 rounded">
+            Load
           </button>
         </div>
         <button onClick={testNode} className="w-full bg-blue-600 text-white px-2 py-1 rounded">
