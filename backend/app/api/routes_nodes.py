@@ -202,3 +202,9 @@ def retest_node(provider: str):
 def list_providers():
     """Alias endpoint for frontend consumption."""
     return list_nodes()
+
+
+@router.post("/providers/{provider}/test")
+def provider_test(provider: str, payload: TestPayload):
+    """Alias for /test/{provider} endpoint."""
+    return test_node(provider, payload)

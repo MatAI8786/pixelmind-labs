@@ -6,6 +6,7 @@ import download from 'downloadjs';
 import ApiStatus from '../components/ApiStatus';
 import ThemeToggle from '../components/ThemeToggle';
 import toast from 'react-hot-toast';
+import { useWorkflowList } from '../hooks/useWorkflowList';
 import {
   useNodesState,
   useEdgesState,
@@ -52,7 +53,10 @@ function FlowBuilder() {
   const [nodes, setNodes, onNodesChange] = useNodesState<CustomNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [addOpen, setAddOpen] = useState(false);
+  const nodeTypesList = ['llm', 'input', 'output', 'tool', 'condition'];
+  const ghostRef = useRef<HTMLDivElement>(null);
+  const { workflows, mutate: refreshWorkflows } = useWorkflowList();
+  const [wfOpen, setWfOpen] = useState(false);
   const { project } = useReactFlow();
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -86,13 +90,8 @@ function FlowBuilder() {
     [setEdges],
   );
 
-  const addNode = (type: string, e: React.MouseEvent) => {
-    if (!reactFlowWrapper.current) return;
-    const bounds = reactFlowWrapper.current.getBoundingClientRect();
-    const position = project({
-      x: e.clientX - bounds.left,
-      y: e.clientY - bounds.top,
-    });
+  const createNode = (type: string, x: number, y: number) => {
+    const position = project({ x, y });
     let data: any = {};
     if (type === 'llm') {
       data = {
@@ -121,6 +120,29 @@ function FlowBuilder() {
     setNodes((nds) => [...nds, newNode]);
     setSelectedNodeId(newNode.id);
   };
+
+
+  const onDragStart = (event: React.DragEvent, type: string) => {
+    event.dataTransfer.setData('application/reactflow', type);
+    event.dataTransfer.effectAllowed = 'move';
+    if (ghostRef.current) {
+      ghostRef.current.textContent = type;
+      event.dataTransfer.setDragImage(ghostRef.current, 10, 10);
+    }
+  };
+
+  const onDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  const onDrop = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    const type = event.dataTransfer.getData('application/reactflow');
+    if (!reactFlowWrapper.current || !type) return;
+    const bounds = reactFlowWrapper.current.getBoundingClientRect();
+    createNode(type, event.clientX - bounds.left, event.clientY - bounds.top);
+  }, []);
 
   const onNodeClick = useCallback((_e: any, node: Node) => {
     setSelectedNodeId(node.id);
@@ -174,6 +196,7 @@ function FlowBuilder() {
         throw new Error(text || res.statusText);
       }
       toast.success('Saved');
+      refreshWorkflows();
     } catch (e: any) {
       toast.error(e.message);
     }
@@ -367,30 +390,48 @@ function FlowBuilder() {
 
   return (
     <div className="flex h-screen">
-        <aside className="w-48 bg-gray-100 dark:bg-gray-900 p-4 space-y-2 text-black dark:text-white">
-          <button
-            onClick={() => setAddOpen((o) => !o)}
-            className="w-full bg-blue-500 text-white px-2 py-1 rounded"
-          >
-            Add Node
-          </button>
-          {addOpen && (
+        <aside className="w-48 bg-gray-100 dark:bg-gray-900 p-4 space-y-2 text-black dark:text-white" onDragOver={onDragOver} onDrop={onDrop}>
+          <div>
+            <h4 className="font-semibold mb-1">Nodes</h4>
             <ul className="space-y-1">
-              {['llm', 'input', 'output', 'tool', 'condition'].map((t) => (
+              {nodeTypesList.map((t) => (
                 <li key={t}>
-                  <button
-                    onClick={(e) => {
-                      addNode(t, e);
-                      setAddOpen(false);
-                    }}
-                    className="w-full text-left px-2 py-1 bg-white dark:bg-gray-700 border rounded dark:border-gray-600"
+                  <div
+                    draggable
+                    onDragStart={(e) => onDragStart(e, t)}
+                    className="cursor-grab px-2 py-1 bg-white dark:bg-gray-700 border rounded dark:border-gray-600"
                   >
                     {t.charAt(0).toUpperCase() + t.slice(1)}
-                  </button>
+                  </div>
                 </li>
               ))}
             </ul>
-          )}
+          </div>
+          <div>
+            <button
+              onClick={() => setWfOpen((o) => !o)}
+              className="w-full bg-blue-500 text-white px-2 py-1 rounded"
+            >
+              Workflows
+            </button>
+            {wfOpen && (
+              <ul className="mt-1 space-y-1">
+                {workflows.map((w) => (
+                  <li key={w.id}>
+                    <button
+                      onClick={() => {
+                        window.location.search = `?wid=${w.id}`;
+                        setWfOpen(false);
+                      }}
+                      className="w-full text-left px-2 py-1 bg-white dark:bg-gray-700 border rounded dark:border-gray-600"
+                    >
+                      {w.name || `Workflow ${w.id}`}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
           <button
             onClick={exportWorkflow}
             className="w-full bg-blue-500 text-white px-2 py-1 rounded"
@@ -433,6 +474,10 @@ function FlowBuilder() {
           />
           {renderConfigPanel()}
         </main>
+        <div
+          ref={ghostRef}
+          className="pointer-events-none absolute -top-10 -left-10 px-2 py-1 bg-white dark:bg-gray-700 border rounded text-sm text-black dark:text-white"
+        />
       </div>
     );
 }

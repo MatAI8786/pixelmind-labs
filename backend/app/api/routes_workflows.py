@@ -54,6 +54,12 @@ def list_workflows():
         ]
 
 
+@router.get('/list')
+def list_workflows_alt():
+    """Alias endpoint returning workflow metadata."""
+    return list_workflows()
+
+
 @router.get('/{workflow_id}')
 def get_workflow(workflow_id: int):
     with Session(engine) as session:
