@@ -17,6 +17,7 @@ from .api import (
     routes_facebook,
     routes_paypal,
     routes_binance,
+    routes_providers,
 )
 from routers import workflows as stub_workflows
 
@@ -47,3 +48,4 @@ app.include_router(routes_bscscan.router)
 app.include_router(routes_facebook.router)
 app.include_router(routes_paypal.router)
 app.include_router(routes_binance.router)
+app.include_router(routes_providers.router, prefix="/api", tags=["providers"])
