@@ -6,18 +6,18 @@ import { Toaster } from 'react-hot-toast';
 
 export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
-    const stored = localStorage.getItem('theme') || 'dark';
-    if (stored === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, []);
+    document.body.classList.toggle('dark', pageProps.theme === 'dark');
+  }, [pageProps.theme]);
 
   return (
     <ErrorBoundary>
       <Component {...pageProps} />
-      <Toaster />
+      <Toaster
+        toastOptions={{
+          style: { background: '#1e293b', color: '#f8fafc' },
+          duration: 3000,
+        }}
+      />
     </ErrorBoundary>
   );
 }
