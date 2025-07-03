@@ -17,6 +17,7 @@ import TriggerNode from '../components/nodes/TriggerNode';
 import ActionNode from '../components/nodes/ActionNode';
 import ConditionNode from '../components/nodes/ConditionNode';
 import { useWorkflowStore } from '../state/workflowStore';
+import toast from 'react-hot-toast';
 
 const nodeTypes = {
   trigger: TriggerNode,
@@ -98,24 +99,40 @@ function BuilderInner() {
   };
 
   const saveWorkflow = async () => {
-    const res = await fetch(`${baseUrl}/api/workflows`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nodes, edges }),
-    });
-    if (res.ok) {
+    try {
+      const res = await fetch(`${baseUrl}/api/workflows`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nodes, edges }),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || res.statusText);
+      }
       const data = await res.json();
       setWorkflowId(data.id);
+      toast.success('Workflow saved \u2714');
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err instanceof Error ? err.message : 'Save failed');
     }
   };
 
   const openWorkflow = async () => {
     if (!workflowId) return;
-    const res = await fetch(`${baseUrl}/api/workflows/${workflowId}`);
-    if (res.ok) {
+    try {
+      const res = await fetch(`${baseUrl}/api/workflows/${workflowId}`);
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || res.statusText);
+      }
       const data = await res.json();
       setNodes(data.nodes || []);
       setEdges(data.edges || []);
+      toast.success('Workflow loaded');
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err instanceof Error ? err.message : 'Load failed');
     }
   };
 
