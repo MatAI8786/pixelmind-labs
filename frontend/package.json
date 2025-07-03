@@ -8,6 +8,7 @@
     "lint": "next lint",
     "lint:ci": "next lint --max-warnings=0",
     "test": "jest",
+    "predev": "rimraf .next/cache",
     "e2e": "npm-run-all -p dev:start e2e:test",
     "dev:start": "next dev",
     "e2e:test": "playwright test --project=chromium",
@@ -47,6 +48,7 @@
     "tailwindcss": "3.3.5",
     "typescript": "5.2.2",
     "@types/uuid": "^9.0.2",
-    "playwright": "^1.46.0"
+    "playwright": "^1.46.0",
+    "rimraf": "^5.0.5"
   }
 }

@@ -1,9 +1,4 @@
-interface NodeInfo {
-  provider: string;
-  status: string;
-  last_checked?: string | null;
-  last_error?: string | null;
-}
+import type { NodeInfo } from '../hooks/useNodes';
 
 interface NodeRowProps {
   item: NodeInfo;
@@ -13,17 +8,17 @@ interface NodeRowProps {
 }
 
 export default function NodeRow({ item, onClick, onRetest, loading }: NodeRowProps) {
-  const color =
-    item.status === 'ok'
-      ? 'bg-green-500'
-      : item.status === 'warning'
-      ? 'bg-yellow-500'
-      : 'bg-red-500';
+  const icon = item.status === 'ok' ? '✓' : '✕';
+  const color = item.status === 'ok' ? 'bg-green-500' : 'bg-red-500';
   return (
     <tr onClick={onClick} data-testid="node-row" className="cursor-pointer">
       <td className="p-2 border capitalize">{item.provider}</td>
       <td className="p-2 border">
-        <span className={`inline-block h-2 w-2 rounded-full ${color}`} />
+        <span
+          className={`px-2 rounded-full text-white text-xs ${color}`}
+        >
+          {icon}
+        </span>
       </td>
       <td className="p-2 border">{item.last_checked || '-'}</td>
       <td className="p-2 border text-xs">{item.last_error || '-'}</td>

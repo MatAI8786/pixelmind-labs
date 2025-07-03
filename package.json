@@ -2,9 +2,13 @@
   "name": "pixelmind-labs-root",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 --app-dir backend\" \"npm run dev --prefix frontend\""
+    "dev": "npm-run-all -p backend frontend",
+    "backend": "uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 --app-dir backend",
+    "frontend": "npm run dev --prefix frontend",
+    "e2e": "npm-run-all -p backend frontend:e2e",
+    "frontend:e2e": "npm run e2e --prefix frontend"
   },
   "devDependencies": {
-    "concurrently": "^8.2.0"
+    "npm-run-all": "^4.1.5"
   }
 }
