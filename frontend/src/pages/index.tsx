@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, useEffect } from 'react';
+import { useCallback, useRef, useState, useEffect, ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -201,7 +201,7 @@ function FlowBuilder() {
   const renderConfigPanel = () => {
     if (!selectedNode) return null;
     const panelBase = (
-      content: JSX.Element,
+      content: ReactNode,
     ) => (
       <div
         className="fixed inset-0 z-20"
