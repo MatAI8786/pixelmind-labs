@@ -18,6 +18,7 @@ from .api import (
     routes_paypal,
     routes_binance,
 )
+from routers import workflows as stub_workflows
 
 colorama_init(autoreset=True)
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(message)s")
@@ -33,6 +34,7 @@ app.add_middleware(
 )
 
 app.include_router(routes_workflows.router, prefix="/api/workflows", tags=["workflows"])
+app.include_router(stub_workflows.router, prefix="/api/workflows", tags=["workflows"])
 app.include_router(routes_keys.router, prefix="/api/keys", tags=["keys"])
 app.include_router(routes_health.router, prefix="/api", tags=["health"])
 app.include_router(routes_llm.router, prefix="/api/llm", tags=["llm"])

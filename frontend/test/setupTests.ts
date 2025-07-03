@@ -5,3 +5,4 @@ class ResizeObserver {
 }
 // @ts-ignore
 global.ResizeObserver = ResizeObserver;
+import '@testing-library/jest-dom';
