@@ -8,7 +8,10 @@
     "lint": "next lint",
     "lint:ci": "next lint --max-warnings=0",
     "test": "jest",
-    "e2e": "start-server-and-test 'npm run dev' http://localhost:3000 'playwright test --project=chromium'"
+    "e2e": "run-p dev:start e2e:test",
+    "dev:start": "next dev --port 3000 & wait-on http://localhost:3000",
+    "e2e:test": "playwright test --project=chromium",
+    "postinstall": "playwright install --with-deps"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.19",
@@ -36,7 +39,8 @@
     "@testing-library/react": "^14.2.1",
     "@testing-library/jest-dom": "^6.1.4",
     "ts-node": "^10.9.1",
-    "start-server-and-test": "^2.0.0",
+    "npm-run-all": "^4.1.5",
+    "wait-on": "^7.0.1",
     "postcss": "^8.5.6",
     "tailwindcss": "3.3.5",
     "typescript": "5.2.2",
