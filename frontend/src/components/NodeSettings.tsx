@@ -1,49 +1,57 @@
-import { useState } from 'react';
-import ProviderTestModal from './ProviderTestModal';
-import NodeRow from './NodeRow';
 import { useNodes, NodeInfo } from '../hooks/useNodes';
+import { Button } from './ui/button';
+import { Table, TableHeader, TableHead, TableRow, TableBody, TableCell } from './ui/table';
+import { motion } from 'framer-motion';
 
 export default function NodeSettings() {
-  const { nodes: rows, mutate } = useNodes();
-  const [selected, setSelected] = useState<NodeInfo | null>(null);
-
+  const { nodes, mutate } = useNodes();
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
   const retest = async (provider: string) => {
-    await fetch(`${baseUrl}/api/nodes/${provider}/retest`, { method: 'POST' });
+    await fetch(`${baseUrl}/api/providers/${provider}/test`, { method: 'POST' });
     mutate();
   };
 
   return (
-    <div>
-      <h3 className="font-bold mb-2">Nodes</h3>
-      <table className="w-full border-collapse text-left text-sm">
-        <thead>
-          <tr>
-            <th className="p-2 border">Provider</th>
-            <th className="p-2 border">Status</th>
-            <th className="p-2 border">Last Checked</th>
-            <th className="p-2 border">Last Error</th>
-            <th className="p-2 border">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="overflow-y-auto max-h-80 block">
-          {rows.map((r) => (
-            <NodeRow
-              key={r.provider}
-              item={r}
-              onRetest={() => retest(r.provider)}
-              onClick={() => setSelected(r)}
-            />
+    <div className="max-h-96 overflow-y-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Provider</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Last Checked</TableHead>
+            <TableHead>Last Error</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {(Array.isArray(nodes) ? nodes : []).map((n: any) => (
+            <motion.tr
+              key={n.provider}
+              initial={{ opacity: 0.5 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.15 }}
+              className="border-b last:border-b-0"
+            >
+              <TableCell className="capitalize">{n.provider}</TableCell>
+              <TableCell>
+                <span className={n.health === 'ok' ? 'text-green-500' : 'text-red-500'}>
+                  {n.health === 'ok' ? '✓' : '✗'}
+                </span>
+              </TableCell>
+              <TableCell>{n.checked_at || '-'}</TableCell>
+              <TableCell className="max-w-[160px] truncate">
+                {n.last_error || '-'}
+              </TableCell>
+              <TableCell>
+                <Button onClick={() => retest(n.provider)} size="sm">
+                  Retest
+                </Button>
+              </TableCell>
+            </motion.tr>
           ))}
-        </tbody>
-      </table>
-      {selected && (
-        <ProviderTestModal
-          open={true}
-          log={JSON.stringify(selected, null, 2)}
-          onClose={() => setSelected(null)}
-        />
-      )}
+        </TableBody>
+      </Table>
     </div>
   );
 }

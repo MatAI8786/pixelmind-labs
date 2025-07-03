@@ -7,7 +7,7 @@ export function useWorkflowList() {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
   const { setList } = useWorkflowListStore();
   const { data, error, mutate } = useSWR<WorkflowMeta[]>(
-    `${baseUrl}/api/workflows`,
+    `${baseUrl}/api/workflows/list`,
     fetcher,
     { onSuccess: (d) => setList(d) }
   );
