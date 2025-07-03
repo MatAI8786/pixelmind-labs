@@ -21,3 +21,5 @@ uploaded_logo.png
 venv/
 
 history/
+
+secrets/
