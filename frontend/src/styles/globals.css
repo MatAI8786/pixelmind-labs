@@ -3,7 +3,11 @@
 @tailwind utilities;
 
 body {
-  cursor: default;
+  cursor: url('/cursors/cursor-dark.svg'), default;
+}
+
+html.dark body {
+  cursor: url('/cursors/cursor-light.svg'), default;
 }
 
 input,

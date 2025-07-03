@@ -1,21 +1,13 @@
-import useSWR from 'swr';
 import { useState } from 'react';
 import ProviderTestModal from './ProviderTestModal';
 import NodeRow from './NodeRow';
-
-interface NodeInfo {
-  provider: string;
-  status: string;
-  last_checked?: string | null;
-  last_error?: string | null;
-}
+import { useNodes, NodeInfo } from '../hooks/useNodes';
 
 export default function NodeSettings() {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-  const fetcher = (url: string) => fetch(url).then((r) => r.json());
-  const { data: rows = [], mutate } = useSWR<NodeInfo[]>(`${baseUrl}/api/nodes`, fetcher);
+  const { nodes: rows, mutate } = useNodes();
   const [selected, setSelected] = useState<NodeInfo | null>(null);
 
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
   const retest = async (provider: string) => {
     await fetch(`${baseUrl}/api/nodes/${provider}/retest`, { method: 'POST' });
     mutate();

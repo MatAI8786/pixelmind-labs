@@ -155,10 +155,31 @@ def test_node(provider: str, payload: TestPayload):
     return log_and_response("failed", provider, "unsupported provider", logs)
 
 
-@router.get('/nodes')
+DEFAULT_PROVIDERS = [
+    "openai",
+    "google",
+    "gemini",
+    "etherscan",
+    "tiktok",
+    "gmail",
+    "bscan",
+    "facebook",
+    "paypal",
+    "binance",
+]
+
+
+@router.get("/nodes")
 def list_nodes():
+    """Return all known providers with their last recorded status."""
     with Session(engine) as session:
-        return session.exec(select(NodeStatus)).all()
+        items = session.exec(select(NodeStatus)).all()
+        if not items:
+            for p in DEFAULT_PROVIDERS:
+                session.add(NodeStatus(provider=p, status="unknown"))
+            session.commit()
+            items = session.exec(select(NodeStatus)).all()
+        return items
 
 
 @router.post('/nodes/{provider}/retest')
@@ -175,3 +196,9 @@ def retest_node(provider: str):
         session.commit()
         session.refresh(node)
         return node
+
+
+@router.get("/providers")
+def list_providers():
+    """Alias endpoint for frontend consumption."""
+    return list_nodes()
