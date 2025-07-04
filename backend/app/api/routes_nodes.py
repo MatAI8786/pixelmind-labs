@@ -206,5 +206,16 @@ def list_providers():
 
 @router.post("/providers/{provider}/test")
 def provider_test(provider: str, payload: TestPayload):
-    """Alias for /test/{provider} endpoint."""
-    return test_node(provider, payload)
+    """Alias for /test/{provider} endpoint that also persists status."""
+    result = test_node(provider, payload)
+    now = datetime.utcnow()
+    with Session(engine) as session:
+        node = session.get(NodeStatus, provider)
+        if not node:
+            node = NodeStatus(provider=provider, status="unknown")
+        node.status = "ok" if result.get("status") == "success" else "error"
+        node.last_checked = now
+        node.last_error = None if result.get("status") == "success" else result.get("message")
+        session.add(node)
+        session.commit()
+    return result

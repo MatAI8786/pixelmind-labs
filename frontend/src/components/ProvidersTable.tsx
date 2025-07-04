@@ -58,7 +58,7 @@ export default function ProvidersTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {providers.map((p: ProviderInfo) => (
+          {(Array.isArray(providers) ? providers : []).map((p: ProviderInfo) => (
             <TableRow key={p.provider} className="border-b last:border-b-0">
               <TableCell className="capitalize">{p.provider}</TableCell>
               <TableCell>
@@ -66,8 +66,8 @@ export default function ProvidersTable() {
                   {p.status === 'ok' ? '✓' : '✗'}
                 </span>
               </TableCell>
-              <TableCell>{p.last_checked || '-'}</TableCell>
-              <TableCell className="max-w-[160px] truncate">{p.last_error || '-'}</TableCell>
+              <TableCell>{p.last_checked || 'n/a'}</TableCell>
+              <TableCell className="max-w-[160px] truncate">{p.last_error || 'n/a'}</TableCell>
               <TableCell>
                 <Button size="sm" onClick={() => testProvider(p.provider)}>
                   {en.test}
