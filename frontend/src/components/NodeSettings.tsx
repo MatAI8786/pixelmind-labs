@@ -39,9 +39,9 @@ export default function NodeSettings() {
                   {n.health === 'ok' ? '✓' : '✗'}
                 </span>
               </TableCell>
-              <TableCell>{n.checked_at || '-'}</TableCell>
+              <TableCell>{n.checked_at || 'n/a'}</TableCell>
               <TableCell className="max-w-[160px] truncate">
-                {n.last_error || '-'}
+                {n.last_error || 'n/a'}
               </TableCell>
               <TableCell>
                 <Button onClick={() => retest(n.provider)} size="sm">

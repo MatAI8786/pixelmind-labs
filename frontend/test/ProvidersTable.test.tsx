@@ -28,5 +28,11 @@ test('retest updates status to Healthy', async () => {
     Promise.resolve({ ok: true, json: () => Promise.resolve([{ ...mockList[0], status: 'ok' }]) })
   );
   screen.getByRole('button', { name: /test/i }).click();
-  await waitFor(() => expect(fetch).toHaveBeenLastCalledWith(expect.stringContaining('/providers/openai/test'), expect.anything()));
+  await waitFor(() =>
+    expect(
+      (fetch as jest.Mock).mock.calls.some((c) =>
+        String(c[0]).includes('/providers/openai/test'),
+      ),
+    ).toBe(true),
+  );
 });

@@ -3,10 +3,10 @@ import dynamic from 'next/dynamic';
 import Head from 'next/head';
 import Link from 'next/link';
 import download from 'downloadjs';
-import ApiStatus from '../components/ApiStatus';
 import ThemeToggle from '../components/ThemeToggle';
 import toast from 'react-hot-toast';
 import { useWorkflowList } from '../hooks/useWorkflowList';
+import { WorkflowMeta } from '../state/workflowListStore';
 import {
   useNodesState,
   useEdgesState,
@@ -58,6 +58,7 @@ function FlowBuilder() {
   const ghostRef = useRef<HTMLDivElement>(null);
   const { workflows, mutate: refreshWorkflows } = useWorkflowList();
   const [wfOpen, setWfOpen] = useState(false);
+  const [menu, setMenu] = useState<{ x: number; y: number; wf: WorkflowMeta } | null>(null);
   const { project } = useReactFlow();
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -141,6 +142,31 @@ function FlowBuilder() {
       'workflow.json',
       'application/json',
     );
+  };
+
+  const renameWorkflow = async (wf: WorkflowMeta) => {
+    const name = prompt('New name', wf.name);
+    if (!name) return;
+    await fetch(`${baseUrl}/api/workflows/${wf.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+    refreshWorkflows();
+    setMenu(null);
+  };
+
+  const duplicateWorkflow = async (id: number) => {
+    await fetch(`${baseUrl}/api/workflows/${id}/duplicate`, { method: 'POST' });
+    refreshWorkflows();
+    setMenu(null);
+  };
+
+  const deleteWorkflow = async (id: number) => {
+    if (!confirm('Delete workflow?')) return;
+    await fetch(`${baseUrl}/api/workflows/${id}`, { method: 'DELETE' });
+    refreshWorkflows();
+    setMenu(null);
   };
 
   const importWorkflow = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -367,7 +393,7 @@ function FlowBuilder() {
 
   return (
     <div className="flex h-screen">
-        <aside className="w-48 bg-gray-100 dark:bg-gray-900 p-4 space-y-2 text-black dark:text-white" onDragOver={onDragOver} onDrop={onDrop}>
+        <aside className="w-48 bg-gray-100 dark:bg-gray-900 p-4 space-y-2 text-black dark:text-white">
           <div>
             <h4 className="font-semibold mb-1">Nodes</h4>
             <ul className="space-y-1">
@@ -393,7 +419,13 @@ function FlowBuilder() {
             {wfOpen && (
               <ul className="mt-1 space-y-1">
                 {workflows.map((w) => (
-                  <li key={w.id}>
+                  <li
+                    key={w.id}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      setMenu({ x: e.clientX, y: e.clientY, wf: w });
+                    }}
+                  >
                     <button
                       onClick={() => {
                         window.location.search = `?wid=${w.id}`;
@@ -434,9 +466,13 @@ function FlowBuilder() {
             Settings
           </Link>
           <ThemeToggle />
-          <ApiStatus />
         </aside>
-        <main className="flex-1 relative dark:bg-gray-900" ref={reactFlowWrapper}>
+        <main
+          className="flex-1 relative dark:bg-gray-900"
+          ref={reactFlowWrapper}
+          onDragOver={onDragOver}
+          onDrop={onDrop}
+        >
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -454,6 +490,38 @@ function FlowBuilder() {
           ref={ghostRef}
           className="pointer-events-none absolute -top-10 -left-10 px-2 py-1 bg-white dark:bg-gray-700 border rounded text-sm text-black dark:text-white"
         />
+        {menu && (
+          <ul
+            className="fixed z-50 bg-white dark:bg-gray-700 border rounded text-sm"
+            style={{ top: menu.y, left: menu.x }}
+            onClick={() => setMenu(null)}
+          >
+            <li>
+              <button
+                onClick={() => renameWorkflow(menu.wf)}
+                className="block w-full text-left px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-600"
+              >
+                Rename
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => duplicateWorkflow(menu.wf.id)}
+                className="block w-full text-left px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-600"
+              >
+                Duplicate
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => deleteWorkflow(menu.wf.id)}
+                className="block w-full text-left px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-600"
+              >
+                Delete
+              </button>
+            </li>
+          </ul>
+        )}
       </div>
     );
 }
