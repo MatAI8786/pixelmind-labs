@@ -20,7 +20,15 @@ test('LLM to Input workflow persists and provider test works', async ({ page }) 
   });
 
   await page.goto('/');
-  await page.evaluate(() => { window.prompt = () => 'e2e'; });
+  await page.evaluate(() => {
+    window.prompt = () => 'e2e';
+    document.querySelectorAll('[draggable]').forEach((el: Element) => {
+      el.addEventListener('dragstart', (e) => {
+        const dt = (e as DragEvent).dataTransfer;
+        if (dt) dt.setData('application/reactflow', el.textContent!.trim().toLowerCase());
+      });
+    });
+  });
 
   const llm = page.locator('aside >> text=LLM');
   const input = page.locator('aside >> text=Input');
