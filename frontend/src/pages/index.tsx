@@ -76,7 +76,7 @@ function FlowBuilder() {
         })
         .catch(() => {});
     }
-  }, [baseUrl]);
+  }, [baseUrl, setNodes, setEdges]);
 
   useEffect(() => {
     const handle = (e: KeyboardEvent) => {
@@ -92,13 +92,16 @@ function FlowBuilder() {
     [setEdges],
   );
 
-  const createNode = (type: string, x: number, y: number) => {
-    if (!rfInstance) return;
-    const { x: px, y: py } = rfInstance.project({ x, y });
-    const newNode = dragNodeFactory(type, px, py) as Node<CustomNodeData>;
-    setNodes((nds) => [...nds, newNode]);
-    setSelectedNodeId(newNode.id);
-  };
+  const createNode = useCallback(
+    (type: string, x: number, y: number) => {
+      if (!rfInstance) return;
+      const { x: px, y: py } = rfInstance.project({ x, y });
+      const newNode = dragNodeFactory(type, px, py) as Node<CustomNodeData>;
+      setNodes((nds) => [...nds, newNode]);
+      setSelectedNodeId(newNode.id);
+    },
+    [rfInstance, setNodes],
+  );
 
 
   const onDragStart = (event: React.DragEvent, type: string) => {
@@ -123,7 +126,7 @@ function FlowBuilder() {
       const bounds = reactFlowWrapper.current.getBoundingClientRect();
       createNode(type, event.clientX - bounds.left, event.clientY - bounds.top);
     },
-    [rfInstance],
+    [createNode],
   );
 
   const onNodeClick = useCallback((_e: any, node: Node) => {
