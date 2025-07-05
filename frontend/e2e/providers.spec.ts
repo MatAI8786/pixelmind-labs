@@ -9,7 +9,7 @@ const drag = async (page, source, target) => {
   await page.mouse.up();
 };
 
-test('LLM to Input workflow persists', async ({ page }) => {
+test('LLM to Input workflow persists and provider test works', async ({ page }) => {
   let saved: any = null;
   await page.route('**/api/workflows/save', async (route, request) => {
     saved = await request.postDataJSON();
@@ -40,4 +40,14 @@ test('LLM to Input workflow persists', async ({ page }) => {
   await page.waitForResponse(/\/api\/providers/);
 
   await expect(page.locator('.react-flow__edge-path')).toHaveCount(1);
+
+  await page.goto('/settings');
+  await page.waitForResponse(/\/api\/providers/);
+
+  await page.route('**/api/providers/openai/test', async (route) => {
+    await route.fulfill({ status: 200, body: JSON.stringify({ success: true }) });
+  });
+
+  await page.getByRole('button', { name: 'Test' }).first().click();
+  await page.waitForResponse(/\/api\/providers\/openai\/test/);
 });

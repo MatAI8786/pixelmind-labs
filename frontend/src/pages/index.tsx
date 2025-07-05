@@ -15,7 +15,6 @@ import {
   type Connection,
   type Edge,
   type Node,
-  useReactFlow,
   ReactFlowProvider,
 } from 'reactflow';
 import { WorkflowProvider } from '../state/workflowContext';
@@ -59,7 +58,7 @@ function FlowBuilder() {
   const { workflows, mutate: refreshWorkflows } = useWorkflowList();
   const [wfOpen, setWfOpen] = useState(false);
   const [menu, setMenu] = useState<{ x: number; y: number; wf: WorkflowMeta } | null>(null);
-  const { project } = useReactFlow();
+  const [rfInstance, setRfInstance] = useState<any>(null);
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   useEffect(() => {
@@ -93,7 +92,8 @@ function FlowBuilder() {
   );
 
   const createNode = (type: string, x: number, y: number) => {
-    const { x: px, y: py } = project({ x, y });
+    if (!rfInstance) return;
+    const { x: px, y: py } = rfInstance.project({ x, y });
     const newNode = dragNodeFactory(type, px, py) as Node<CustomNodeData>;
     setNodes((nds) => [...nds, newNode]);
     setSelectedNodeId(newNode.id);
@@ -114,13 +114,16 @@ function FlowBuilder() {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
-  const onDrop = useCallback((event: React.DragEvent) => {
-    event.preventDefault();
-    const type = event.dataTransfer.getData('application/reactflow');
-    if (!reactFlowWrapper.current || !type) return;
-    const bounds = reactFlowWrapper.current.getBoundingClientRect();
-    createNode(type, event.clientX - bounds.left, event.clientY - bounds.top);
-  }, []);
+  const onDrop = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+      const type = event.dataTransfer.getData('application/reactflow');
+      if (!reactFlowWrapper.current || !type) return;
+      const bounds = reactFlowWrapper.current.getBoundingClientRect();
+      createNode(type, event.clientX - bounds.left, event.clientY - bounds.top);
+    },
+    [rfInstance],
+  );
 
   const onNodeClick = useCallback((_e: any, node: Node) => {
     setSelectedNodeId(node.id);
@@ -467,25 +470,28 @@ function FlowBuilder() {
           </Link>
           <ThemeToggle />
         </aside>
-        <main
-          className="flex-1 relative dark:bg-gray-900"
-          ref={reactFlowWrapper}
-          onDragOver={onDragOver}
-          onDrop={onDrop}
-        >
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            nodeTypes={nodeTypes}
-            defaultEdgeOptions={defaultEdgeOptions}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            onNodeClick={onNodeClick}
-            className="h-full"
-          />
-          {renderConfigPanel()}
-        </main>
+        <ReactFlowProvider>
+          <main
+            className="flex-1 relative dark:bg-gray-900"
+            ref={reactFlowWrapper}
+            onDragOver={onDragOver}
+            onDrop={onDrop}
+          >
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              nodeTypes={nodeTypes}
+              defaultEdgeOptions={defaultEdgeOptions}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={onConnect}
+              onNodeClick={onNodeClick}
+              onInit={setRfInstance}
+              className="h-full"
+            />
+            {renderConfigPanel()}
+          </main>
+        </ReactFlowProvider>
         <div
           ref={ghostRef}
           className="pointer-events-none absolute -top-10 -left-10 px-2 py-1 bg-white dark:bg-gray-700 border rounded text-sm text-black dark:text-white"
@@ -529,12 +535,10 @@ function FlowBuilder() {
 export default function Home() {
   return (
     <WorkflowProvider>
-      <ReactFlowProvider>
-        <Head>
-          <title>PixelMind Labs</title>
-        </Head>
-        <FlowBuilder />
-      </ReactFlowProvider>
+      <Head>
+        <title>PixelMind Labs</title>
+      </Head>
+      <FlowBuilder />
     </WorkflowProvider>
   );
 }

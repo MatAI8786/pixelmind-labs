@@ -1,7 +1,9 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import ThemeToggle from '../components/ThemeToggle';
-import ProvidersTable from '../components/ProvidersTable';
+import dynamic from 'next/dynamic';
+
+const AdminApp = dynamic(() => import('../components/AdminApp'), { ssr: false });
 
 export default function Settings() {
   return (
@@ -14,7 +16,7 @@ export default function Settings() {
       <div className="mb-4">
         <ThemeToggle />
       </div>
-      <ProvidersTable />
+      <AdminApp />
     </div>
   );
 }
