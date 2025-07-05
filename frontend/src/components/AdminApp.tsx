@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import ProviderTestModal from './ProviderTestModal';
 import {
   Table,
@@ -39,45 +40,73 @@ export default function AdminApp() {
         p.provider === name ? { ...p, status: 'testing...' } : p,
       ),
     );
+
     try {
       const res = await fetch(`${baseUrl}/api/providers/${name}/test`, {
         method: 'POST',
       });
-      const data = await res.json();
-      setLog(JSON.stringify(data, null, 2));
+
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch {
+        // ignore json parse errors
+      }
+
+      setLog(JSON.stringify(data ?? {}, null, 2));
       setOpen(true);
-      if (res.ok && data.success) {
+
+      const errorMsg = Array.isArray(data?.errors)
+        ? data.errors[0]?.msg || 'Unknown error'
+        : data?.details || data?.message || null;
+
+      if (res.ok && data?.success && !errorMsg) {
+        toast.success('Provider healthy');
         setProviders((ps) =>
           ps.map((p) =>
             p.provider === name
               ? {
                   ...p,
-                  status: '✅',
+                  status: '✅ healthy',
                   last_checked: new Date().toISOString(),
-                  last_error: '',
+                  last_error: '–',
                 }
               : p,
           ),
         );
       } else {
+        const msg = errorMsg || 'Error';
+        toast.error(msg);
         setProviders((ps) =>
           ps.map((p) =>
             p.provider === name
-              ? { ...p, status: '❌', last_error: data.detail || '' }
+              ? {
+                  ...p,
+                  status: '❌ error',
+                  last_checked: new Date().toISOString(),
+                  last_error: msg,
+                }
               : p,
           ),
         );
       }
     } catch (e: any) {
+      toast.error(e.message);
       setLog(String(e));
       setOpen(true);
       setProviders((ps) =>
         ps.map((p) =>
-          p.provider === name ? { ...p, status: '❌', last_error: e.message } : p,
+          p.provider === name
+            ? {
+                ...p,
+                status: '❌ error',
+                last_checked: new Date().toISOString(),
+                last_error: e.message,
+              }
+            : p,
         ),
       );
     }
-    load();
   };
 
   return (

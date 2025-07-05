@@ -29,8 +29,12 @@ jobs:
         working-directory: frontend
         run: npm run test
       - name: E2E tests
-        working-directory: frontend
-        run: npm run e2e
+        run: |
+          npm run e2e &
+          PID=$!
+          wait $PID
+        post: |
+          kill $(jobs -p)
       - name: Build
         working-directory: frontend
         run: npm run build
