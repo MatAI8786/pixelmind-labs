@@ -6,8 +6,8 @@ import { Toaster } from 'react-hot-toast';
 
 export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
-    document.body.classList.toggle('dark', pageProps.theme === 'dark');
-  }, [pageProps.theme]);
+    document.documentElement.classList.add('dark');
+  }, []);
 
   return (
     <ErrorBoundary>

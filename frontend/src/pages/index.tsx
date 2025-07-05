@@ -1,9 +1,9 @@
 import { useCallback, useRef, useState, useEffect, ReactNode } from 'react';
+import * as ContextMenu from '@radix-ui/react-context-menu';
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
 import Link from 'next/link';
 import download from 'downloadjs';
-import ThemeToggle from '../components/ThemeToggle';
 import toast from 'react-hot-toast';
 import { useWorkflowList } from '../hooks/useWorkflowList';
 import { WorkflowMeta } from '../state/workflowListStore';
@@ -58,6 +58,7 @@ function FlowBuilder() {
   const { workflows, mutate: refreshWorkflows } = useWorkflowList();
   const [wfOpen, setWfOpen] = useState(false);
   const [menu, setMenu] = useState<{ x: number; y: number; wf: WorkflowMeta } | null>(null);
+  const [edgeMenu, setEdgeMenu] = useState<{ x: number; y: number; id: string } | null>(null);
   const [rfInstance, setRfInstance] = useState<any>(null);
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -396,7 +397,10 @@ function FlowBuilder() {
 
   return (
     <div className="flex h-screen">
-        <aside className="w-48 bg-gray-100 dark:bg-gray-900 p-4 space-y-2 text-black dark:text-white">
+        <aside
+          className="w-48 bg-gray-100 dark:bg-gray-900 p-4 space-y-2 text-black dark:text-white"
+          onDragOver={() => false}
+        >
           <div>
             <h4 className="font-semibold mb-1">Nodes</h4>
             <ul className="space-y-1">
@@ -468,7 +472,6 @@ function FlowBuilder() {
           <Link href="/settings" className="block bg-white dark:bg-gray-700 border rounded text-center px-2 py-1 dark:border-gray-600 dark:text-white">
             Settings
           </Link>
-          <ThemeToggle />
         </aside>
         <ReactFlowProvider>
           <main
@@ -486,6 +489,10 @@ function FlowBuilder() {
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
               onNodeClick={onNodeClick}
+              onEdgeContextMenu={(e, edge) => {
+                e.preventDefault();
+                setEdgeMenu({ x: e.clientX, y: e.clientY, id: edge.id });
+              }}
               onInit={setRfInstance}
               className="h-full"
             />
@@ -496,6 +503,27 @@ function FlowBuilder() {
           ref={ghostRef}
           className="pointer-events-none absolute -top-10 -left-10 px-2 py-1 bg-white dark:bg-gray-700 border rounded text-sm text-black dark:text-white"
         />
+        {edgeMenu && (
+          <ContextMenu.Root open onOpenChange={() => setEdgeMenu(null)}>
+            <ContextMenu.Trigger asChild>
+              <div />
+            </ContextMenu.Trigger>
+            <ContextMenu.Content
+              className="bg-white dark:bg-gray-700 border rounded text-sm"
+              style={{ position: 'fixed', top: edgeMenu.y, left: edgeMenu.x }}
+            >
+              <ContextMenu.Item
+                onSelect={() => {
+                  setEdges((eds) => eds.filter((e) => e.id !== edgeMenu.id));
+                  setEdgeMenu(null);
+                }}
+                className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"
+              >
+                Delete edge
+              </ContextMenu.Item>
+            </ContextMenu.Content>
+          </ContextMenu.Root>
+        )}
         {menu && (
           <ul
             className="fixed z-50 bg-white dark:bg-gray-700 border rounded text-sm"
