@@ -408,12 +408,13 @@ function FlowBuilder() {
             <h4 className="font-semibold mb-1">Nodes</h4>
             <ul className="space-y-1">
               {nodeTypesList.map((t) => (
-                <li key={t} className="flex items-center space-x-1">
-                  <span
-                    className="w-3 h-3 bg-gray-400 rounded cursor-grab"
-                    draggable
-                    onDragStart={(e) => onDragStart(e, t)}
-                  />
+                <li
+                  key={t}
+                  className="flex items-center space-x-1 cursor-grab"
+                  draggable
+                  onDragStart={(e) => onDragStart(e, t)}
+                >
+                  <span className="w-3 h-3 bg-gray-400 rounded" />
                   <span>{t.charAt(0).toUpperCase() + t.slice(1)}</span>
                 </li>
               ))}
