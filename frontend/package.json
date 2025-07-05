@@ -11,7 +11,7 @@
     "predev": "rimraf .next/cache",
     "e2e": "npm-run-all -p dev:start e2e:test",
     "dev:start": "next dev",
-    "e2e:test": "NEXT_PUBLIC_API_URL=http://localhost:3000 playwright test --project=chromium",
+    "e2e:test": "NEXT_PUBLIC_API_URL=http://localhost:3000 playwright test --project=chromium --reporter=list --timeout=60000",
     "postinstall": "playwright install --with-deps"
   },
   "dependencies": {
