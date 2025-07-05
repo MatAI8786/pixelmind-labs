@@ -10,15 +10,22 @@ const drag = async (page, source, target) => {
 };
 
 test("smoke settings and builder flow", async ({ page }) => {
+  const cors = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "*",
+    "Access-Control-Allow-Methods": "*",
+  };
   await page.route("**/api/providers", async (route) => {
     await route.fulfill({
       status: 200,
+      headers: { ...cors, "Content-Type": "application/json" },
       body: JSON.stringify([{ provider: "Google", status: "ok" }]),
     });
   });
   await page.route("**/api/providers/Google/test", async (route) => {
     await route.fulfill({
       status: 200,
+      headers: { ...cors, "Content-Type": "application/json" },
       body: JSON.stringify({ success: true }),
     });
   });
@@ -31,14 +38,23 @@ test("smoke settings and builder flow", async ({ page }) => {
   let saved: any = null;
   await page.route("**/api/workflows/save", async (route, request) => {
     saved = await request.postDataJSON();
-    await route.fulfill({ status: 200, body: JSON.stringify({ id: "5" }) });
+    await route.fulfill({
+      status: 200,
+      headers: { ...cors, "Content-Type": "application/json" },
+      body: JSON.stringify({ id: "5" }),
+    });
   });
   await page.route("**/api/workflows/5", async (route) => {
-    await route.fulfill({ status: 200, body: JSON.stringify(saved) });
+    await route.fulfill({
+      status: 200,
+      headers: { ...cors, "Content-Type": "application/json" },
+      body: JSON.stringify(saved),
+    });
   });
   await page.route("**/api/workflows/list", async (route) => {
     await route.fulfill({
       status: 200,
+      headers: { ...cors, "Content-Type": "application/json" },
       body: JSON.stringify([{ id: "5", name: "smoke-5" }]),
     });
   });
@@ -70,8 +86,11 @@ test("smoke settings and builder flow", async ({ page }) => {
   await expect(output).toBeVisible();
 
   await llm.dragTo(canvas, { targetPosition: { x: 200, y: 200 } });
+  await page.getByRole('button', { name: '×' }).click();
   await input.dragTo(canvas, { targetPosition: { x: 400, y: 200 } });
+  await page.getByRole('button', { name: '×' }).click();
   await output.dragTo(canvas, { targetPosition: { x: 600, y: 200 } });
+  await page.getByRole('button', { name: '×' }).click();
 
   const src1 = page.locator(".react-flow__node-llm .react-flow__handle.source");
   const tgt1 = page.locator(
@@ -88,9 +107,11 @@ test("smoke settings and builder flow", async ({ page }) => {
   await drag(page, src2, tgt2);
 
   await page.getByRole("button", { name: "Save Workflow" }).click();
-  await expect(page.locator(".react-hot-toast")).toHaveCount(1);
+  await expect(page.getByText("Saved")).toBeVisible();
 
   await page.reload();
   await page.waitForLoadState("networkidle");
+  await page.getByRole('button', { name: 'Workflows' }).click();
+  await page.getByRole('button', { name: 'smoke-5' }).click();
   await expect(page.locator(".react-flow__node")).toHaveCount(3);
 });
