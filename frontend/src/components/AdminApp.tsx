@@ -1,61 +1,126 @@
-import { Admin, Resource, List, Datagrid, TextField, useRefresh } from 'react-admin';
-import simpleRestProvider from 'ra-data-simple-rest';
-import { useState } from 'react';
-import { Dialog } from '@headlessui/react';
+import { useEffect, useState } from 'react';
+import ProviderTestModal from './ProviderTestModal';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from './ui/table';
+
+export interface ProviderInfo {
+  provider: string;
+  status: string;
+  last_checked?: string | null;
+  last_error?: string | null;
+}
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-const dataProvider = simpleRestProvider(`${baseUrl}/api`);
-
-const TestButton = ({ record }: any) => {
-  const refresh = useRefresh();
-  const [log, setLog] = useState('');
-  const [open, setOpen] = useState(false);
-  const runTest = async () => {
-    const res = await fetch(`${baseUrl}/api/providers/${record.provider}/test`, {
-      method: 'POST',
-    });
-    const data = await res.json();
-    setLog(JSON.stringify(data, null, 2));
-    setOpen(true);
-    refresh();
-  };
-  const copy = () => {
-    if (navigator.clipboard) navigator.clipboard.writeText(log);
-  };
-  return (
-    <>
-      <button onClick={runTest}>Test</button>
-      <Dialog open={open} onClose={() => setOpen(false)} className="fixed inset-0 z-40 flex items-center justify-center p-4">
-        <div className="fixed inset-0 bg-black/50" aria-hidden="true" onClick={() => setOpen(false)} />
-        <Dialog.Panel className="relative bg-white dark:bg-gray-800 rounded p-4 w-full max-w-md text-black dark:text-white">
-          <button onClick={() => setOpen(false)} className="absolute top-2 right-2 text-lg">✖︎</button>
-          <Dialog.Title className="font-bold mb-2">Test Log</Dialog.Title>
-          <pre className="bg-black text-white p-2 rounded text-xs max-h-[60vh] overflow-auto whitespace-pre-wrap">{log}</pre>
-          <div className="text-right mt-2">
-            <button onClick={copy} className="bg-blue-600 text-white px-2 py-1 rounded text-sm">Copy log</button>
-          </div>
-        </Dialog.Panel>
-      </Dialog>
-    </>
-  );
-};
-
-const ProviderList = (props: any) => (
-  <List {...props} resource="providers">
-    <Datagrid rowClick={false} bulkActionButtons={false}>
-      <TextField source="provider" label="Provider" />
-      <TextField source="status" label="Status" />
-      <TextField source="last_checked" label="Last Checked" />
-      <TextField source="last_error" label="Last Error" />
-      <TestButton />
-    </Datagrid>
-  </List>
-);
 
 export default function AdminApp() {
+  const [providers, setProviders] = useState<ProviderInfo[]>([]);
+  const [log, setLog] = useState('');
+  const [open, setOpen] = useState(false);
+
+  const load = async () => {
+    const res = await fetch(`${baseUrl}/api/providers`);
+    const data = await res.json();
+    setProviders(data);
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const runTest = async (name: string) => {
+    setProviders((ps) =>
+      ps.map((p) =>
+        p.provider === name ? { ...p, status: 'testing...' } : p,
+      ),
+    );
+    try {
+      const res = await fetch(`${baseUrl}/api/providers/${name}/test`, {
+        method: 'POST',
+      });
+      const data = await res.json();
+      setLog(JSON.stringify(data, null, 2));
+      setOpen(true);
+      if (res.ok && data.success) {
+        setProviders((ps) =>
+          ps.map((p) =>
+            p.provider === name
+              ? {
+                  ...p,
+                  status: '✅',
+                  last_checked: new Date().toISOString(),
+                  last_error: '',
+                }
+              : p,
+          ),
+        );
+      } else {
+        setProviders((ps) =>
+          ps.map((p) =>
+            p.provider === name
+              ? { ...p, status: '❌', last_error: data.detail || '' }
+              : p,
+          ),
+        );
+      }
+    } catch (e: any) {
+      setLog(String(e));
+      setOpen(true);
+      setProviders((ps) =>
+        ps.map((p) =>
+          p.provider === name ? { ...p, status: '❌', last_error: e.message } : p,
+        ),
+      );
+    }
+    load();
+  };
+
   return (
-    <Admin dataProvider={dataProvider} basename="/admin">
-      <Resource name="providers" list={ProviderList} />
-    </Admin>
+    <div>
+      {providers.length === 0 && (
+        <div className="mb-2 rounded bg-yellow-100 text-yellow-800 p-2">
+          No providers registered
+        </div>
+      )}
+      {providers.length > 0 && (
+        <Table className="border-collapse w-full">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Provider</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Last Checked</TableHead>
+              <TableHead>Last Error</TableHead>
+              <TableHead></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {providers.map((p) => (
+              <TableRow key={p.provider}>
+                <TableCell>{p.provider}</TableCell>
+                <TableCell>{p.status}</TableCell>
+                <TableCell>{p.last_checked || ''}</TableCell>
+                <TableCell className="max-w-xs truncate">
+                  {p.last_error || ''}
+                </TableCell>
+                <TableCell>
+                  <button
+                    onClick={() => runTest(p.provider)}
+                    className="text-blue-600"
+                  >
+                    Test
+                  </button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+      <ProviderTestModal open={open} log={log} onClose={() => setOpen(false)} />
+    </div>
   );
 }

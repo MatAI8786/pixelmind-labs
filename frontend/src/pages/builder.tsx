@@ -140,7 +140,10 @@ function BuilderInner() {
 
   return (
     <div className="flex h-screen">
-      <aside className="w-40 bg-gray-100 dark:bg-gray-900 p-2 space-y-2 text-black dark:text-white">
+      <aside
+        className="w-40 bg-gray-100 dark:bg-gray-900 p-2 space-y-2 text-black dark:text-white"
+        onDragOver={() => false}
+      >
         {['trigger', 'action', 'condition'].map((t) => (
           <div
             key={t}
