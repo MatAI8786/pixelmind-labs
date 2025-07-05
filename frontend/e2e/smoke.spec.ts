@@ -38,6 +38,12 @@ test('smoke settings and builder flow', async ({ page }) => {
   await page.evaluate(() => {
     // override prompt for saving workflow
     window.prompt = () => 'smoke-5';
+    document.querySelectorAll('[draggable]').forEach((el: Element) => {
+      el.addEventListener('dragstart', (e) => {
+        const dt = (e as DragEvent).dataTransfer;
+        if (dt) dt.setData('application/reactflow', el.textContent!.trim().toLowerCase());
+      });
+    });
   });
 
   const llm = page.locator('aside >> text=LLM');

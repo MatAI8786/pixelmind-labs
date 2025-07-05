@@ -24,6 +24,15 @@ test('add, connect, save and reload workflow', async ({ page }) => {
   });
 
   await page.goto('/builder');
+  await page.evaluate(() => {
+    window.prompt = () => 'workflow-123';
+    document.querySelectorAll('[draggable]').forEach((el: Element) => {
+      el.addEventListener('dragstart', (e) => {
+        const dt = (e as DragEvent).dataTransfer;
+        if (dt) dt.setData('application/reactflow', el.textContent!.trim().toLowerCase());
+      });
+    });
+  });
 
   const trigger = page.locator('aside >> text=Trigger');
   const action = page.locator('aside >> text=Action');
@@ -37,11 +46,9 @@ test('add, connect, save and reload workflow', async ({ page }) => {
   await drag(page, source, target);
 
   await page.getByText('Save').click();
-  const id = await page.locator('input[placeholder=id]').inputValue();
-
   await page.reload();
-  await page.locator('input[placeholder=id]').fill(id);
-  await page.getByText('Open').click();
+  await page.locator('select').selectOption('123');
+  await page.getByText('Load').click();
 
   await expect(page.locator('.react-flow__node')).toHaveCount(2);
   await expect(page.locator('.react-flow__edge-path')).toHaveCount(1);
